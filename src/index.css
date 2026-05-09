@@ -1,9 +1,12 @@
 :root {
   --text: #141f0e;
-  --background: #fdfff1;
-  --primary: #64743d;
-  --secondary: #dedcff;
-  --accent: #d5b7ff;
+  --background: #fffcf0;
+  --primary: #6e7263;
+  --secondary: #dfd9e8;
+  --accent: #fcfcfc;
+  --journalist: #657936;
+  --artist: #f49dee;
+  --educator: #a095dd;
 }
 
 body {

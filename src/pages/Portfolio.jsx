@@ -1,14 +1,35 @@
-// src/pages/Portfolio.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-// Dummy data
 const dummyData = [
   { id: 1, title: "Oil Painting Exhibition", category: "artist" },
   { id: 2, title: "Guest Lecture at Uni Zurich", category: "educator" },
   { id: 3, title: "Article: The Future of Art", category: "journalist" },
   { id: 4, title: "Abstract Sculpture", category: "artist" },
 ];
+
+// ==========================================
+// 🛠️ EASY LAYOUT SETTINGS
+// ==========================================
+
+const TOPIC_POSITIONS = {
+  journalist: { left: "55%", top: "12%" },
+  artist: { left: "15%", top: "55%" },
+  educator: { left: "85%", top: "85%" },
+};
+
+const TRIANGLE_OFFSETS = {
+  journalist: { x: "-50px", y: "100px" },
+  artist: { x: "80px", y: "-70px" },
+  educator: { x: "-80px", y: "-80px" },
+};
+
+// Split into X and Y so we can perfectly center our soft gradients
+const getCornerX = (topic) =>
+  `calc(${TOPIC_POSITIONS[topic].left} + ${TRIANGLE_OFFSETS[topic].x})`;
+const getCornerY = (topic) =>
+  `calc(${TOPIC_POSITIONS[topic].top} + ${TRIANGLE_OFFSETS[topic].y})`;
+const getCorner = (topic) => `${getCornerX(topic)} ${getCornerY(topic)}`;
 
 export default function Portfolio({ category }) {
   const [activeCluster, setActiveCluster] = useState(null);
@@ -17,31 +38,65 @@ export default function Portfolio({ category }) {
   // VIEW 1: THE DESKTOP LANDING (category === "all")
   // ==========================================
   if (category === "all") {
+    useEffect(() => {
+      const handleMouseMove = (e) => {
+        const distances = Object.keys(TOPIC_POSITIONS).map((topic) => {
+          const elX =
+            window.innerWidth * (parseFloat(TOPIC_POSITIONS[topic].left) / 100);
+          const elY =
+            window.innerHeight * (parseFloat(TOPIC_POSITIONS[topic].top) / 100);
+          const dist = Math.hypot(e.clientX - elX, e.clientY - elY);
+          return { topic, dist };
+        });
+
+        distances.sort((a, b) => a.dist - b.dist);
+        const closest = distances[0];
+
+        const triggerRadius =
+          Math.min(window.innerWidth, window.innerHeight) * 0.35;
+
+        if (closest.dist < triggerRadius) {
+          if (activeCluster !== closest.topic) {
+            setActiveCluster(closest.topic);
+          }
+        } else {
+          if (activeCluster !== null) {
+            setActiveCluster(null);
+          }
+        }
+      };
+
+      window.addEventListener("mousemove", handleMouseMove);
+      return () => window.removeEventListener("mousemove", handleMouseMove);
+    }, [activeCluster]);
+
     const getBlurStyle = (clusterName) => {
-      if (!activeCluster) return "none";
-      if (activeCluster === clusterName) return "none";
-      return "blur(6px) opacity(0.7)";
+      if (!activeCluster || activeCluster === clusterName) return "none";
+      return "blur(6px) opacity(0.5)";
     };
 
-    const clusterStyle = {
+    const clusterStyle = (topic) => ({
       position: "absolute",
-      transition: "all 0.4s ease-in-out",
+      left: TOPIC_POSITIONS[topic].left,
+      top: TOPIC_POSITIONS[topic].top,
+      transform: "translate(-50%, -50%)",
+      transition: "filter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       gap: "1rem",
-      padding: "2rem",
-      borderRadius: "16px",
-    };
+      zIndex: 10,
+      filter: getBlurStyle(topic),
+    });
 
-    const iconStyle = {
+    const getIconStyle = (topicColor) => ({
       backgroundColor: "var(--background)",
-      border: "2px solid var(--secondary)",
+      border: `2px solid ${topicColor}`,
       borderRadius: "12px",
       padding: "1rem",
       fontSize: "2rem",
       cursor: "pointer",
-      boxShadow: "4px 4px 0px var(--accent)",
+      boxShadow: `4px 4px 0px ${topicColor}`,
       transition: "transform 0.2s, box-shadow 0.2s",
       textDecoration: "none",
       color: "var(--text)",
@@ -49,7 +104,26 @@ export default function Portfolio({ category }) {
       flexDirection: "column",
       alignItems: "center",
       gap: "0.5rem",
-    };
+    });
+
+    // 🌊 THE NEW SOFT WAVE LOGIC
+    const getWaveStyle = (topic) => ({
+      position: "absolute",
+      // Anchor the exact center of this massive div to the triangle corner
+      left: getCornerX(topic),
+      top: getCornerY(topic),
+      // Make it absolutely massive so it can cover any screen size
+      width: "250vmax",
+      height: "250vmax",
+      // A soft radial gradient: Solid in the center, transparent at the edges
+      background: `radial-gradient(circle closest-side, var(--${topic}) 40%, transparent 100%)`,
+      // Scale from 0 to 1, centered on the corner
+      transform: `translate(-50%, -50%) scale(${activeCluster === topic ? 1 : 0})`,
+      // Buttery smooth easing for the wave
+      transition: "transform 0.7s cubic-bezier(0.25, 1, 0.5, 1)",
+      zIndex: activeCluster === topic ? 2 : 1,
+      pointerEvents: "none", // Ensures it doesn't block mouse clicks
+    });
 
     return (
       <div
@@ -63,26 +137,45 @@ export default function Portfolio({ category }) {
           backgroundSize: "40px 40px",
         }}
       >
-        {/* TOP CENTER: JOURNALIST */}
+        {/* THE STATIC BACKGROUND TRIANGLE CONTAINER */}
         <div
-          onMouseEnter={() => setActiveCluster("journalist")}
-          onMouseLeave={() => setActiveCluster(null)}
           style={{
-            ...clusterStyle,
-            top: "10%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            filter: getBlurStyle("journalist"),
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            clipPath: `polygon(${getCorner("journalist")}, ${getCorner("artist")}, ${getCorner("educator")})`,
           }}
         >
-          <h2 style={{ color: "var(--primary)", margin: 0 }}>Journalist</h2>
+          {/* Base Layer: The 3-Corner Gradient */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: `
+              radial-gradient(circle at ${getCorner("journalist")}, var(--journalist) 0%, transparent 60%),
+              radial-gradient(circle at ${getCorner("artist")}, var(--artist) 0%, transparent 60%),
+              radial-gradient(circle at ${getCorner("educator")}, var(--educator) 0%, transparent 60%)
+            `,
+              backgroundColor: "var(--background)",
+            }}
+          />
+
+          {/* The New Soft Scaling Waves */}
+          <div style={getWaveStyle("journalist")} />
+          <div style={getWaveStyle("artist")} />
+          <div style={getWaveStyle("educator")} />
+        </div>
+
+        {/* TOP CENTER: JOURNALIST */}
+        <div style={clusterStyle("journalist")}>
+          <h2 style={{ color: "var(--journalist)", margin: 0 }}>Journalist</h2>
           <div style={{ display: "flex", gap: "1rem" }}>
-            <Link to="/journalist" style={iconStyle}>
+            <Link to="/journalist" style={getIconStyle("var(--journalist)")}>
               📰 <span style={{ fontSize: "0.8rem" }}>Articles</span>
             </Link>
             <button
-              style={iconStyle}
-              onClick={() => alert("Direct Interaction: Opened Notepad!")}
+              style={getIconStyle("var(--journalist)")}
+              onClick={() => alert("Opened Notepad!")}
             >
               📝 <span style={{ fontSize: "0.8rem" }}>Drafts</span>
             </button>
@@ -90,24 +183,15 @@ export default function Portfolio({ category }) {
         </div>
 
         {/* BOTTOM LEFT: ARTIST */}
-        <div
-          onMouseEnter={() => setActiveCluster("artist")}
-          onMouseLeave={() => setActiveCluster(null)}
-          style={{
-            ...clusterStyle,
-            bottom: "15%",
-            left: "10%",
-            filter: getBlurStyle("artist"),
-          }}
-        >
-          <h2 style={{ color: "var(--primary)", margin: 0 }}>Artist</h2>
+        <div style={clusterStyle("artist")}>
+          <h2 style={{ color: "var(--artist)", margin: 0 }}>Artist</h2>
           <div style={{ display: "flex", gap: "1rem" }}>
-            <Link to="/artist" style={iconStyle}>
+            <Link to="/artist" style={getIconStyle("var(--artist)")}>
               🎨 <span style={{ fontSize: "0.8rem" }}>Gallery</span>
             </Link>
             <button
-              style={iconStyle}
-              onClick={() => alert("Direct Interaction: Playing Audio Sketch!")}
+              style={getIconStyle("var(--artist)")}
+              onClick={() => alert("Playing Audio!")}
             >
               🎵 <span style={{ fontSize: "0.8rem" }}>Audio</span>
             </button>
@@ -115,24 +199,15 @@ export default function Portfolio({ category }) {
         </div>
 
         {/* BOTTOM RIGHT: EDUCATOR */}
-        <div
-          onMouseEnter={() => setActiveCluster("educator")}
-          onMouseLeave={() => setActiveCluster(null)}
-          style={{
-            ...clusterStyle,
-            bottom: "15%",
-            right: "10%",
-            filter: getBlurStyle("educator"),
-          }}
-        >
-          <h2 style={{ color: "var(--primary)", margin: 0 }}>Educator</h2>
+        <div style={clusterStyle("educator")}>
+          <h2 style={{ color: "var(--educator)", margin: 0 }}>Educator</h2>
           <div style={{ display: "flex", gap: "1rem" }}>
-            <Link to="/educator" style={iconStyle}>
+            <Link to="/educator" style={getIconStyle("var(--educator)")}>
               📚 <span style={{ fontSize: "0.8rem" }}>Courses</span>
             </Link>
             <button
-              style={iconStyle}
-              onClick={() => alert("Direct Interaction: Download Syllabus")}
+              style={getIconStyle("var(--educator)")}
+              onClick={() => alert("Downloaded Syllabus!")}
             >
               📄 <span style={{ fontSize: "0.8rem" }}>Syllabus</span>
             </button>
@@ -143,9 +218,11 @@ export default function Portfolio({ category }) {
   }
 
   // ==========================================
-  // VIEW 2: THE FILTERED LIST (category === "artist", etc.)
+  // VIEW 2: THE FILTERED LIST (Inner Pages)
   // ==========================================
+  const getTopicColor = (cat) => `var(--${cat})`;
   const filteredItems = dummyData.filter((item) => item.category === category);
+  const activeColor = getTopicColor(category);
 
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "2rem" }}>
@@ -154,7 +231,7 @@ export default function Portfolio({ category }) {
           style={{
             fontSize: "2.5rem",
             marginBottom: "1rem",
-            color: "var(--primary)",
+            color: "var(--text)",
           }}
         >
           Luca Koch
@@ -184,7 +261,7 @@ export default function Portfolio({ category }) {
             style={{
               padding: "0.5rem 1rem",
               backgroundColor:
-                category === "artist" ? "var(--primary)" : "var(--secondary)",
+                category === "artist" ? "var(--artist)" : "var(--secondary)",
               color:
                 category === "artist" ? "var(--background)" : "var(--text)",
               borderRadius: "4px",
@@ -198,7 +275,9 @@ export default function Portfolio({ category }) {
             style={{
               padding: "0.5rem 1rem",
               backgroundColor:
-                category === "educator" ? "var(--primary)" : "var(--secondary)",
+                category === "educator"
+                  ? "var(--educator)"
+                  : "var(--secondary)",
               color:
                 category === "educator" ? "var(--background)" : "var(--text)",
               borderRadius: "4px",
@@ -213,7 +292,7 @@ export default function Portfolio({ category }) {
               padding: "0.5rem 1rem",
               backgroundColor:
                 category === "journalist"
-                  ? "var(--primary)"
+                  ? "var(--journalist)"
                   : "var(--secondary)",
               color:
                 category === "journalist" ? "var(--background)" : "var(--text)",
@@ -229,8 +308,9 @@ export default function Portfolio({ category }) {
       <main>
         <h2
           style={{
-            borderBottom: "2px solid var(--accent)",
+            borderBottom: `3px solid ${activeColor}`,
             paddingBottom: "0.5rem",
+            color: activeColor,
           }}
         >
           {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -241,20 +321,21 @@ export default function Portfolio({ category }) {
             <div
               key={item.id}
               style={{
-                backgroundColor: "var(--background)",
+                backgroundColor: "var(--accent)",
                 border: "1px solid var(--secondary)",
-                borderLeft: "6px solid var(--accent)",
+                borderLeft: `8px solid ${getTopicColor(item.category)}`,
                 padding: "1.5rem",
                 borderRadius: "8px",
-                boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
+                boxShadow: "0 4px 6px rgba(0,0,0,0.02)",
               }}
             >
-              <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--primary)" }}>
+              <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--text)" }}>
                 {item.title}
               </h3>
               <span
                 style={{
                   backgroundColor: "var(--secondary)",
+                  color: "var(--text)",
                   padding: "0.25rem 0.5rem",
                   borderRadius: "4px",
                   fontSize: "0.875rem",
@@ -265,11 +346,6 @@ export default function Portfolio({ category }) {
               </span>
             </div>
           ))}
-          {filteredItems.length === 0 && (
-            <p style={{ color: "var(--text)", opacity: 0.7 }}>
-              No items found for this category.
-            </p>
-          )}
         </div>
       </main>
     </div>
