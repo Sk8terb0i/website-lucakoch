@@ -159,8 +159,10 @@ export default function Portfolio({ category }) {
             <h2
               style={{
                 color: "var(--artist)",
-                margin: 0,
+                fontFamily: "BrandFont, sans-serif",
                 textTransform: "lowercase",
+                fontSize: "2rem",
+                margin: 0,
               }}
             >
               {t.artist}
@@ -172,8 +174,10 @@ export default function Portfolio({ category }) {
             <h2
               style={{
                 color: "var(--journalist)",
-                margin: 0,
+                fontFamily: "BrandFont, sans-serif",
                 textTransform: "lowercase",
+                fontSize: "2rem",
+                margin: 0,
               }}
             >
               {t.journalist}
@@ -185,8 +189,10 @@ export default function Portfolio({ category }) {
             <h2
               style={{
                 color: "var(--educator)",
-                margin: 0,
+                fontFamily: "BrandFont, sans-serif",
                 textTransform: "lowercase",
+                fontSize: "2rem",
+                margin: 0,
               }}
             >
               {t.educator}

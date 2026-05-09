@@ -27,3 +27,11 @@ a {
 a:hover {
   color: var(--accent);
 }
+
+@font-face {
+  font-family: 'BrandFont';
+  src: url('/fonts/bosch.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}

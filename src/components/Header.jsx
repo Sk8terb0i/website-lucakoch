@@ -32,9 +32,11 @@ export default function Header() {
             fontWeight: "normal",
             letterSpacing: "0.05em",
             color: "var(--text)",
+            fontFamily: "BrandFont, sans-serif",
+            paddingTop: "4px", // Slight vertical adjustment for better visual alignment
           }}
         >
-          Luca Koch Portfolio
+          {t.siteTitle}
         </h1>
       </div>
 
