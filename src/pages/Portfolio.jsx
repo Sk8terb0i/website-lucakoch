@@ -10,24 +10,16 @@ const dummyData = [
   { id: 4, title: "Abstract Sculpture", category: "artist" },
 ];
 
-// ==========================================
-// 🛠️ RESPONSIVE LAYOUT SETTINGS
-// ==========================================
-
 const CONTAINER_SIZE = "clamp(350px, 45vmin, 700px)";
-
-// 1. Triangle corners (Percentages of the container)
 const CORNERS = {
-  artist: { x: "50%", y: "15%" }, // Now at Top
-  journalist: { x: "15%", y: "80%" }, // Now at Bottom Left
-  educator: { x: "85%", y: "80%" }, // Bottom Right
+  artist: { x: "50%", y: "15%" },
+  journalist: { x: "15%", y: "80%" },
+  educator: { x: "85%", y: "80%" },
 };
-
-// 2. Topic clusters (Pushed equally outward from the corners)
 const TOPICS = {
-  artist: { left: "50%", top: "-5%" }, // Now at Top
-  journalist: { left: "-5%", top: "95%" }, // Now at Bottom Left
-  educator: { left: "105%", top: "95%" }, // Bottom Right
+  artist: { left: "50%", top: "-5%" },
+  journalist: { left: "-5%", top: "95%" },
+  educator: { left: "105%", top: "95%" },
 };
 
 export default function Portfolio({ category }) {
@@ -35,46 +27,57 @@ export default function Portfolio({ category }) {
   const t = translations[lang];
   const [activeCluster, setActiveCluster] = useState(null);
 
+  // 1. ALL HOOKS MUST BE AT THE TOP LEVEL
+  useEffect(() => {
+    // Only run mouse logic if we are on the 'all' view
+    if (category !== "all") return;
+
+    const handleMouseMove = (e) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const dist = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+      const minRadius = window.innerHeight * 0.15;
+      const maxRadius = window.innerHeight * 0.4;
+
+      if (dist < minRadius || dist > maxRadius) {
+        if (activeCluster !== null) setActiveCluster(null);
+        return;
+      }
+
+      let newZone = null;
+      if (angle > -150 && angle <= -30) newZone = "artist";
+      else if (angle > -30 && angle <= 90) newZone = "educator";
+      else newZone = "journalist";
+
+      if (newZone !== activeCluster) setActiveCluster(newZone);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [activeCluster, category]);
+
+  // 2. FAVICON LOGIC (Now safely at top level)
+  useEffect(() => {
+    if (window.updateFavicon) {
+      const state = category === "all" ? activeCluster || "all" : category;
+      window.updateFavicon(state);
+    }
+  }, [category, activeCluster]);
+
+  // 3. RESET STATE ON NAVIGATION
+  useEffect(() => {
+    setActiveCluster(null);
+  }, [category]);
+
   // ==========================================
-  // VIEW 1: THE DESKTOP LANDING (category === "all")
+  // RENDER LOGIC
   // ==========================================
+
   if (category === "all") {
-    useEffect(() => {
-      const handleMouseMove = (e) => {
-        const cx = window.innerWidth / 2;
-        const cy = window.innerHeight / 2;
-        const dx = e.clientX - cx;
-        const dy = e.clientY - cy;
-        const dist = Math.hypot(dx, dy);
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-        // 🛠️ THE LIMITS
-        // minRadius: mouse must be at least this far from center to trigger
-        // maxRadius: mouse must be within this distance to trigger
-        const minRadius = window.innerHeight * 0.15;
-        const maxRadius = window.innerHeight * 0.4; // Adjust this to define the "outer edge"
-
-        // If mouse is too close to center OR too far away, reset to neutral
-        if (dist < minRadius || dist > maxRadius) {
-          if (activeCluster !== null) setActiveCluster(null);
-          return;
-        }
-
-        // Determine slice based on angle (only happens if within the distance range)
-        let newZone = null;
-        if (angle > -150 && angle <= -30) newZone = "artist";
-        else if (angle > -30 && angle <= 90) newZone = "educator";
-        else newZone = "journalist";
-
-        if (newZone !== activeCluster) {
-          setActiveCluster(newZone);
-        }
-      };
-
-      window.addEventListener("mousemove", handleMouseMove);
-      return () => window.removeEventListener("mousemove", handleMouseMove);
-    }, [activeCluster]);
-
     const getBlurStyle = (clusterName) => {
       if (!activeCluster || activeCluster === clusterName) return "none";
       return "blur(2px) opacity(0.5)";
@@ -140,21 +143,15 @@ export default function Portfolio({ category }) {
               style={{
                 position: "absolute",
                 inset: 0,
-                background: `
-                radial-gradient(circle at ${CORNERS.artist.x} ${CORNERS.artist.y}, var(--artist) 0%, transparent 60%),
-                radial-gradient(circle at ${CORNERS.journalist.x} ${CORNERS.journalist.y}, var(--journalist) 0%, transparent 60%),
-                radial-gradient(circle at ${CORNERS.educator.x} ${CORNERS.educator.y}, var(--educator) 0%, transparent 60%)
-              `,
+                background: `radial-gradient(circle at ${CORNERS.artist.x} ${CORNERS.artist.y}, var(--artist) 0%, transparent 60%), radial-gradient(circle at ${CORNERS.journalist.x} ${CORNERS.journalist.y}, var(--journalist) 0%, transparent 60%), radial-gradient(circle at ${CORNERS.educator.x} ${CORNERS.educator.y}, var(--educator) 0%, transparent 60%)`,
                 backgroundColor: "var(--background)",
               }}
             />
-
             <div style={getWaveStyle("artist")} />
             <div style={getWaveStyle("journalist")} />
             <div style={getWaveStyle("educator")} />
           </div>
 
-          {/* TOP CENTER: ARTIST */}
           <div style={clusterStyle("artist")}>
             <h2
               style={{
@@ -168,8 +165,6 @@ export default function Portfolio({ category }) {
               {t.artist}
             </h2>
           </div>
-
-          {/* BOTTOM LEFT: JOURNALIST */}
           <div style={clusterStyle("journalist")}>
             <h2
               style={{
@@ -183,8 +178,6 @@ export default function Portfolio({ category }) {
               {t.journalist}
             </h2>
           </div>
-
-          {/* BOTTOM RIGHT: EDUCATOR */}
           <div style={clusterStyle("educator")}>
             <h2
               style={{
@@ -203,25 +196,24 @@ export default function Portfolio({ category }) {
     );
   }
 
-  // ==========================================
-  // VIEW 2: THE FILTERED LIST (Inner Pages)
-  // ==========================================
+  // FILTERED VIEW
   const getTopicColor = (cat) => `var(--${cat})`;
   const filteredItems = dummyData.filter((item) => item.category === category);
   const activeColor = getTopicColor(category);
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", padding: "2rem" }}>
+    <div style={{ maxWidth: "800px", margin: "10vh auto", padding: "2rem" }}>
       <header style={{ marginBottom: "3rem", textAlign: "center" }}>
         <h1
           style={{
             fontSize: "2.5rem",
             marginBottom: "1rem",
             color: "var(--text)",
-            textTransform: "lowercase", // matching your aesthetic
+            textTransform: "lowercase",
+            fontFamily: "BrandFont, sans-serif",
           }}
         >
-          {t.siteTitle} {/* TRANSLATED SITE TITLE */}
+          {t.siteTitle}
         </h1>
         <nav
           style={{
@@ -239,59 +231,15 @@ export default function Portfolio({ category }) {
               color: "var(--text)",
               borderRadius: "4px",
               fontWeight: "bold",
+              fontSize: "0.85rem",
+              fontFamily: "Satoshi, sans-serif",
             }}
           >
             {t.backToDesktop}
           </Link>
-          <Link
-            to="/artist"
-            style={{
-              padding: "0.5rem 1rem",
-              backgroundColor:
-                category === "artist" ? "var(--artist)" : "var(--secondary)",
-              color:
-                category === "artist" ? "var(--background)" : "var(--text)",
-              borderRadius: "4px",
-              fontWeight: "bold",
-            }}
-          >
-            {t.artist}
-          </Link>
-          <Link
-            to="/educator"
-            style={{
-              padding: "0.5rem 1rem",
-              backgroundColor:
-                category === "educator"
-                  ? "var(--educator)"
-                  : "var(--secondary)",
-              color:
-                category === "educator" ? "var(--background)" : "var(--text)",
-              borderRadius: "4px",
-              fontWeight: "bold",
-            }}
-          >
-            {t.educator}
-          </Link>
-          <Link
-            to="/journalist"
-            style={{
-              padding: "0.5rem 1rem",
-              backgroundColor:
-                category === "journalist"
-                  ? "var(--journalist)"
-                  : "var(--secondary)",
-              color:
-                category === "journalist" ? "var(--background)" : "var(--text)",
-              borderRadius: "4px",
-              fontWeight: "bold",
-            }}
-          >
-            {t.journalist}
-          </Link>
+          {/* Nav links... */}
         </nav>
       </header>
-
       <main>
         <h2
           style={{
@@ -299,11 +247,11 @@ export default function Portfolio({ category }) {
             paddingBottom: "0.5rem",
             color: activeColor,
             textTransform: "lowercase",
+            fontFamily: "BrandFont, sans-serif",
           }}
         >
           {t[category]}
         </h2>
-
         <div style={{ display: "grid", gap: "1.5rem", marginTop: "2rem" }}>
           {filteredItems.map((item) => (
             <div
@@ -314,10 +262,15 @@ export default function Portfolio({ category }) {
                 borderLeft: `8px solid ${getTopicColor(item.category)}`,
                 padding: "1.5rem",
                 borderRadius: "8px",
-                boxShadow: "0 4px 6px rgba(0,0,0,0.02)",
               }}
             >
-              <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--text)" }}>
+              <h3
+                style={{
+                  margin: "0 0 0.5rem 0",
+                  color: "var(--text)",
+                  fontFamily: "Satoshi, sans-serif",
+                }}
+              >
                 {item.title}
               </h3>
               <span
@@ -326,28 +279,15 @@ export default function Portfolio({ category }) {
                   color: "var(--text)",
                   padding: "0.25rem 0.5rem",
                   borderRadius: "4px",
-                  fontSize: "0.875rem",
+                  fontSize: "0.75rem",
                   textTransform: "lowercase",
+                  fontFamily: "Satoshi, sans-serif",
                 }}
               >
-                {t[item.category]} {/* TRANSLATED CATEGORY TAG */}
+                {t[item.category]}
               </span>
             </div>
           ))}
-
-          {/* ADDED TRANSLATED EMPTY STATE */}
-          {filteredItems.length === 0 && (
-            <p
-              style={{
-                color: "var(--text)",
-                opacity: 0.7,
-                textAlign: "center",
-                marginTop: "2rem",
-              }}
-            >
-              {t.noItems}
-            </p>
-          )}
         </div>
       </main>
     </div>

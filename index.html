@@ -2,9 +2,56 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" id="dynamic-favicon" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>website-lucakoch</title>
+    <title>luca koch</title>
+
+    <script>
+      window.updateFavicon = (target) => {
+        const root = document.documentElement;
+        const getCol = (v) => getComputedStyle(root).getPropertyValue(v).trim();
+        
+        const colors = {
+          artist: getCol('--artist'),
+          journalist: getCol('--journalist'),
+          educator: getCol('--educator')
+        };
+
+        const activeColor = colors[target];
+        
+        // If we have an active category (hover or filter), show solid color
+        // If 'all', show the balanced tri-color mesh
+        const svgMarkup = activeColor 
+          ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+               <polygon points="50,15 15,80 85,80" fill="${activeColor}"/>
+             </svg>`
+          : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+               <defs>
+                 <radialGradient id="a" cx="50%" cy="15%" r="70%" fx="50%" fy="15%">
+                   <stop offset="0%" stop-color="${colors.artist}" />
+                   <stop offset="100%" stop-color="${colors.artist}" stop-opacity="0" />
+                 </radialGradient>
+                 <radialGradient id="j" cx="15%" cy="80%" r="70%" fx="15%" fy="80%">
+                   <stop offset="0%" stop-color="${colors.journalist}" />
+                   <stop offset="100%" stop-color="${colors.journalist}" stop-opacity="0" />
+                 </radialGradient>
+                 <radialGradient id="e" cx="85%" cy="80%" r="70%" fx="85%" fy="80%">
+                   <stop offset="0%" stop-color="${colors.educator}" />
+                   <stop offset="100%" stop-color="${colors.educator}" stop-opacity="0" />
+                 </radialGradient>
+               </defs>
+               
+               <polygon points="50,15 15,80 85,80" fill="${colors.journalist}" />
+               <polygon points="50,15 15,80 85,80" fill="url(#a)" />
+               <polygon points="50,15 15,80 85,80" fill="url(#e)" />
+             </svg>`;
+
+        const link = document.getElementById('dynamic-favicon');
+        if (link) {
+          link.href = `data:image/svg+xml,${encodeURIComponent(svgMarkup)}`;
+        }
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>
