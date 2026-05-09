@@ -1,3 +1,6 @@
+/* ============================================================
+   1. VARIABLES & COLORS
+   ============================================================ */
 :root {
   --text: #1f1a0e;
   --background: #f2f0e7;
@@ -9,29 +12,65 @@
   --educator: #885fdb;
 }
 
+/* ============================================================
+   2. FONT DECLARATIONS
+   ============================================================ */
+
+/* The Custom Brand Font (Bosch) */
+@font-face {
+  font-family: 'BrandFont';
+  src: url('/fonts/bosch.otf') format('opentype'); /* OTF files use opentype format */
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Satoshi Variable (Covers weights 100 through 900) */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Variable.woff2') format('woff2-variations'),
+       url('/fonts/Satoshi-Variable.woff2') format('woff2'); /* WOFF2 is the fastest web format */
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Satoshi Variable Italic */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-VariableItalic.woff2') format('woff2-variations'),
+       url('/fonts/Satoshi-VariableItalic.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ============================================================
+   3. GLOBAL STYLES
+   ============================================================ */
 body {
   margin: 0;
   padding: 0;
   background-color: var(--background);
   color: var(--text);
-  font-family: "Helvetica Neue", Arial, sans-serif;
+  /* Set Satoshi as the default font for the entire app */
+  font-family: 'Satoshi', sans-serif; 
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
   color: var(--primary);
   text-decoration: none;
-  transition: color 0.2s ease-in-out;
+  transition: color 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
 
 a:hover {
   color: var(--accent);
 }
 
-@font-face {
-  font-family: 'BrandFont';
-  src: url('/fonts/bosch.otf') format('opentype');
+/* Base heading normalization */
+h1, h2, h3, h4 {
   font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+  margin: 0;
 }

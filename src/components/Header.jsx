@@ -86,8 +86,9 @@ export default function Header() {
                 alignItems: "center",
                 zIndex: 1,
                 cursor: "pointer",
-                fontSize: "0.7rem",
-                fontWeight: "normal",
+                fontSize: "0.65rem",
+                fontFamily: "'Satoshi', sans-serif", // Language labels in Satoshi
+                fontWeight: "700", // Bold Satoshi for UI controls
                 color: lang === l ? "var(--background)" : "var(--text)",
                 transition: "color 0.4s",
               }}
