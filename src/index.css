@@ -16,33 +16,33 @@
    2. FONT DECLARATIONS
    ============================================================ */
 
-/* The Custom Brand Font (Bosch) */
-@font-face {
-  font-family: 'BrandFont';
-  src: url('/fonts/bosch.otf') format('opentype'); /* OTF files use opentype format */
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Satoshi Variable (Covers weights 100 through 900) */
+/* Satoshi Variable (Global Foundation) */
 @font-face {
   font-family: 'Satoshi';
   src: url('/fonts/Satoshi-Variable.woff2') format('woff2-variations'),
-       url('/fonts/Satoshi-Variable.woff2') format('woff2'); /* WOFF2 is the fastest web format */
+       url('/fonts/Satoshi-Variable.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
-/* Satoshi Variable Italic */
+/* THE PATCH: Forced Satoshi for ALL Accents & Umlauts 
+   This range (U+00A0-00FF) covers: ä ö ü Ä Ö Ü é è ê ë à â î ï ô û ù ç É È À Ç etc. */
 @font-face {
-  font-family: 'Satoshi';
-  src: url('/fonts/Satoshi-VariableItalic.woff2') format('woff2-variations'),
-       url('/fonts/Satoshi-VariableItalic.woff2') format('woff2');
-  font-weight: 100 900;
-  font-style: italic;
+  font-family: 'BrandFont';
+  src: url('/fonts/Satoshi-Variable.woff2') format('woff2');
+  unicode-range: U+00A0-00FF; 
+}
+
+/* THE MAIN FONT: Strictly limited to Standard A-Z, 0-9, and Basic Punctuation
+   By stopping at U+00BF, we explicitly forbid it from trying to render accents. */
+@font-face {
+  font-family: 'BrandFont';
+  src: url('/fonts/bosch.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
   font-display: swap;
+  unicode-range: U+0000-00BF; 
 }
 
 /* ============================================================
@@ -53,7 +53,6 @@ body {
   padding: 0;
   background-color: var(--background);
   color: var(--text);
-  /* Set Satoshi as the default font for the entire app */
   font-family: 'Satoshi', sans-serif; 
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -69,7 +68,6 @@ a:hover {
   color: var(--accent);
 }
 
-/* Base heading normalization */
 h1, h2, h3, h4 {
   font-weight: normal;
   margin: 0;
