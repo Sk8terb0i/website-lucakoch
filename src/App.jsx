@@ -1,17 +1,27 @@
 import { Routes, Route } from "react-router-dom";
 import Portfolio from "./pages/Portfolio";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+
+// --- ADD THIS LINE ---
+import { LanguageProvider } from "./context/LanguageContext";
 
 function App() {
   return (
-    <Routes>
-      {/* Base link that shows everything */}
-      <Route path="/" element={<Portfolio category="all" />} />
+    <LanguageProvider>
+      <Header />
+      <Footer />
 
-      {/* Specific links that pre-filter the website */}
-      <Route path="/artist" element={<Portfolio category="artist" />} />
-      <Route path="/educator" element={<Portfolio category="educator" />} />
-      <Route path="/journalist" element={<Portfolio category="journalist" />} />
-    </Routes>
+      <Routes>
+        <Route path="/" element={<Portfolio category="all" />} />
+        <Route path="/artist" element={<Portfolio category="artist" />} />
+        <Route path="/educator" element={<Portfolio category="educator" />} />
+        <Route
+          path="/journalist"
+          element={<Portfolio category="journalist" />}
+        />
+      </Routes>
+    </LanguageProvider>
   );
 }
 

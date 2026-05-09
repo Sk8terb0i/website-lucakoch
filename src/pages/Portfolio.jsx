@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useLanguage } from "../context/LanguageContext";
+import { translations } from "../translations";
 
 const dummyData = [
   { id: 1, title: "Oil Painting Exhibition", category: "artist" },
@@ -12,31 +14,31 @@ const dummyData = [
 // 🛠️ RESPONSIVE LAYOUT SETTINGS
 // ==========================================
 
-// 1. The master container size: clamp(MIN, IDEAL, MAX)
 const CONTAINER_SIZE = "clamp(350px, 45vmin, 700px)";
 
-// 2. Triangle corners (Percentages of the container)
+// 1. Triangle corners (Percentages of the container)
 const CORNERS = {
-  journalist: { x: "50%", y: "15%" },
-  artist: { x: "15%", y: "80%" },
-  educator: { x: "85%", y: "80%" },
+  artist: { x: "50%", y: "15%" }, // Now at Top
+  journalist: { x: "15%", y: "80%" }, // Now at Bottom Left
+  educator: { x: "85%", y: "80%" }, // Bottom Right
 };
 
-// 3. Topic clusters (Pushed equally outward from the corners)
+// 2. Topic clusters (Pushed equally outward from the corners)
 const TOPICS = {
-  journalist: { left: "50%", top: "-5%" },
-  artist: { left: "-5%", top: "95%" },
-  educator: { left: "105%", top: "95%" },
+  artist: { left: "50%", top: "-5%" }, // Now at Top
+  journalist: { left: "-5%", top: "95%" }, // Now at Bottom Left
+  educator: { left: "105%", top: "95%" }, // Bottom Right
 };
 
 export default function Portfolio({ category }) {
+  const { lang } = useLanguage();
+  const t = translations[lang];
   const [activeCluster, setActiveCluster] = useState(null);
 
   // ==========================================
   // VIEW 1: THE DESKTOP LANDING (category === "all")
   // ==========================================
   if (category === "all") {
-    // Uses angles from the center of the screen, with a central dead-zone!
     useEffect(() => {
       const handleMouseMove = (e) => {
         const cx = window.innerWidth / 2;
@@ -46,19 +48,23 @@ export default function Portfolio({ category }) {
         const dist = Math.hypot(dx, dy);
         const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
-        // The Neutral Zone: If mouse is within 15vh of the center, do nothing.
-        const deadZone = window.innerHeight * 0.15;
+        // 🛠️ THE LIMITS
+        // minRadius: mouse must be at least this far from center to trigger
+        // maxRadius: mouse must be within this distance to trigger
+        const minRadius = window.innerHeight * 0.15;
+        const maxRadius = window.innerHeight * 0.4; // Adjust this to define the "outer edge"
 
-        if (dist < deadZone) {
+        // If mouse is too close to center OR too far away, reset to neutral
+        if (dist < minRadius || dist > maxRadius) {
           if (activeCluster !== null) setActiveCluster(null);
           return;
         }
 
-        // Determine slice based on angle
+        // Determine slice based on angle (only happens if within the distance range)
         let newZone = null;
-        if (angle > -150 && angle <= -30) newZone = "journalist";
+        if (angle > -150 && angle <= -30) newZone = "artist";
         else if (angle > -30 && angle <= 90) newZone = "educator";
-        else newZone = "artist";
+        else newZone = "journalist";
 
         if (newZone !== activeCluster) {
           setActiveCluster(newZone);
@@ -88,29 +94,11 @@ export default function Portfolio({ category }) {
       filter: getBlurStyle(topic),
     });
 
-    const getIconStyle = (topicColor) => ({
-      backgroundColor: "var(--background)",
-      border: `2px solid ${topicColor}`,
-      borderRadius: "12px",
-      padding: "1rem",
-      fontSize: "2rem",
-      cursor: "pointer",
-      boxShadow: `4px 4px 0px ${topicColor}`,
-      transition: "transform 0.2s, box-shadow 0.2s",
-      textDecoration: "none",
-      color: "var(--text)",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "0.5rem",
-    });
-
-    // 🌊 THE SOFT WAVE LOGIC (Now perfectly scales with the container)
     const getWaveStyle = (topic) => ({
       position: "absolute",
       left: CORNERS[topic].x,
       top: CORNERS[topic].y,
-      width: "250%", // 250% of the container size ensures it covers everything
+      width: "250%",
       height: "250%",
       background: `radial-gradient(circle closest-side, var(--${topic}) 10%, transparent 80%)`,
       transform: `translate(-50%, -50%) scale(${activeCluster === topic ? 1 : 0.1})`,
@@ -130,61 +118,79 @@ export default function Portfolio({ category }) {
           overflow: "hidden",
         }}
       >
-        {/* THE RESPONSIVE MASTER CONTAINER */}
         <div
           style={{
             position: "absolute",
-            top: "48%", // Slightly above 50% to visually balance the bottom-heavy triangle
+            top: "48%",
             left: "50%",
             transform: "translate(-50%, -50%)",
             width: CONTAINER_SIZE,
-            aspectRatio: "1 / 1", // Keeps it a perfect square
+            aspectRatio: "1 / 1",
           }}
         >
-          {/* THE TRIANGLE CLIPPING MASK */}
           <div
             style={{
               position: "absolute",
               inset: 0,
               zIndex: 0,
-              clipPath: `polygon(${CORNERS.journalist.x} ${CORNERS.journalist.y}, ${CORNERS.artist.x} ${CORNERS.artist.y}, ${CORNERS.educator.x} ${CORNERS.educator.y})`,
+              clipPath: `polygon(${CORNERS.artist.x} ${CORNERS.artist.y}, ${CORNERS.journalist.x} ${CORNERS.journalist.y}, ${CORNERS.educator.x} ${CORNERS.educator.y})`,
             }}
           >
-            {/* Base Layer: The 3-Corner Gradient */}
             <div
               style={{
                 position: "absolute",
                 inset: 0,
                 background: `
-                radial-gradient(circle at ${CORNERS.journalist.x} ${CORNERS.journalist.y}, var(--journalist) 0%, transparent 60%),
                 radial-gradient(circle at ${CORNERS.artist.x} ${CORNERS.artist.y}, var(--artist) 0%, transparent 60%),
+                radial-gradient(circle at ${CORNERS.journalist.x} ${CORNERS.journalist.y}, var(--journalist) 0%, transparent 60%),
                 radial-gradient(circle at ${CORNERS.educator.x} ${CORNERS.educator.y}, var(--educator) 0%, transparent 60%)
               `,
                 backgroundColor: "var(--background)",
               }}
             />
 
-            {/* The Soft Scaling Waves */}
-            <div style={getWaveStyle("journalist")} />
             <div style={getWaveStyle("artist")} />
+            <div style={getWaveStyle("journalist")} />
             <div style={getWaveStyle("educator")} />
           </div>
 
-          {/* TOP CENTER: JOURNALIST */}
-          <div style={clusterStyle("journalist")}>
-            <h2 style={{ color: "var(--journalist)", margin: 0 }}>
-              Journalist
+          {/* TOP CENTER: ARTIST */}
+          <div style={clusterStyle("artist")}>
+            <h2
+              style={{
+                color: "var(--artist)",
+                margin: 0,
+                textTransform: "lowercase",
+              }}
+            >
+              {t.artist}
             </h2>
           </div>
 
-          {/* BOTTOM LEFT: ARTIST */}
-          <div style={clusterStyle("artist")}>
-            <h2 style={{ color: "var(--artist)", margin: 0 }}>Artist</h2>
+          {/* BOTTOM LEFT: JOURNALIST */}
+          <div style={clusterStyle("journalist")}>
+            <h2
+              style={{
+                color: "var(--journalist)",
+                margin: 0,
+                textTransform: "lowercase",
+              }}
+            >
+              {t.journalist}
+            </h2>
           </div>
 
           {/* BOTTOM RIGHT: EDUCATOR */}
           <div style={clusterStyle("educator")}>
-            <h2 style={{ color: "var(--educator)", margin: 0 }}>Educator</h2>
+            <h2
+              style={{
+                color: "var(--educator)",
+                margin: 0,
+                textTransform: "lowercase",
+              }}
+            >
+              {t.educator}
+            </h2>
           </div>
         </div>
       </div>
@@ -206,9 +212,10 @@ export default function Portfolio({ category }) {
             fontSize: "2.5rem",
             marginBottom: "1rem",
             color: "var(--text)",
+            textTransform: "lowercase", // matching your aesthetic
           }}
         >
-          Luca Koch
+          {t.siteTitle} {/* TRANSLATED SITE TITLE */}
         </h1>
         <nav
           style={{
@@ -228,7 +235,7 @@ export default function Portfolio({ category }) {
               fontWeight: "bold",
             }}
           >
-            ← Back to Desktop
+            {t.backToDesktop}
           </Link>
           <Link
             to="/artist"
@@ -242,7 +249,7 @@ export default function Portfolio({ category }) {
               fontWeight: "bold",
             }}
           >
-            Artist
+            {t.artist}
           </Link>
           <Link
             to="/educator"
@@ -258,7 +265,7 @@ export default function Portfolio({ category }) {
               fontWeight: "bold",
             }}
           >
-            Educator
+            {t.educator}
           </Link>
           <Link
             to="/journalist"
@@ -274,7 +281,7 @@ export default function Portfolio({ category }) {
               fontWeight: "bold",
             }}
           >
-            Journalist
+            {t.journalist}
           </Link>
         </nav>
       </header>
@@ -285,9 +292,10 @@ export default function Portfolio({ category }) {
             borderBottom: `3px solid ${activeColor}`,
             paddingBottom: "0.5rem",
             color: activeColor,
+            textTransform: "lowercase",
           }}
         >
-          {category.charAt(0).toUpperCase() + category.slice(1)}
+          {t[category]}
         </h2>
 
         <div style={{ display: "grid", gap: "1.5rem", marginTop: "2rem" }}>
@@ -313,13 +321,27 @@ export default function Portfolio({ category }) {
                   padding: "0.25rem 0.5rem",
                   borderRadius: "4px",
                   fontSize: "0.875rem",
-                  textTransform: "uppercase",
+                  textTransform: "lowercase",
                 }}
               >
-                {item.category}
+                {t[item.category]} {/* TRANSLATED CATEGORY TAG */}
               </span>
             </div>
           ))}
+
+          {/* ADDED TRANSLATED EMPTY STATE */}
+          {filteredItems.length === 0 && (
+            <p
+              style={{
+                color: "var(--text)",
+                opacity: 0.7,
+                textAlign: "center",
+                marginTop: "2rem",
+              }}
+            >
+              {t.noItems}
+            </p>
+          )}
         </div>
       </main>
     </div>
