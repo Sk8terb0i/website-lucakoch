@@ -9,27 +9,25 @@ const dummyData = [
 ];
 
 // ==========================================
-// 🛠️ EASY LAYOUT SETTINGS
+// 🛠️ RESPONSIVE LAYOUT SETTINGS
 // ==========================================
 
-const TOPIC_POSITIONS = {
-  journalist: { left: "55%", top: "25%" },
-  artist: { left: "25%", top: "55%" },
-  educator: { left: "65%", top: "85%" },
+// 1. The master container size: clamp(MIN, IDEAL, MAX)
+const CONTAINER_SIZE = "clamp(350px, 45vmin, 700px)";
+
+// 2. Triangle corners (Percentages of the container)
+const CORNERS = {
+  journalist: { x: "50%", y: "15%" },
+  artist: { x: "15%", y: "80%" },
+  educator: { x: "85%", y: "80%" },
 };
 
-const TRIANGLE_OFFSETS = {
-  journalist: { x: "-50px", y: "50px" },
-  artist: { x: "80px", y: "0px" },
-  educator: { x: "-60px", y: "-40px" },
+// 3. Topic clusters (Pushed equally outward from the corners)
+const TOPICS = {
+  journalist: { left: "50%", top: "-5%" },
+  artist: { left: "-5%", top: "95%" },
+  educator: { left: "105%", top: "95%" },
 };
-
-// Split into X and Y so we can perfectly center our soft gradients
-const getCornerX = (topic) =>
-  `calc(${TOPIC_POSITIONS[topic].left} + ${TRIANGLE_OFFSETS[topic].x})`;
-const getCornerY = (topic) =>
-  `calc(${TOPIC_POSITIONS[topic].top} + ${TRIANGLE_OFFSETS[topic].y})`;
-const getCorner = (topic) => `${getCornerX(topic)} ${getCornerY(topic)}`;
 
 export default function Portfolio({ category }) {
   const [activeCluster, setActiveCluster] = useState(null);
@@ -38,31 +36,32 @@ export default function Portfolio({ category }) {
   // VIEW 1: THE DESKTOP LANDING (category === "all")
   // ==========================================
   if (category === "all") {
+    // Uses angles from the center of the screen, with a central dead-zone!
     useEffect(() => {
       const handleMouseMove = (e) => {
-        const distances = Object.keys(TOPIC_POSITIONS).map((topic) => {
-          const elX =
-            window.innerWidth * (parseFloat(TOPIC_POSITIONS[topic].left) / 100);
-          const elY =
-            window.innerHeight * (parseFloat(TOPIC_POSITIONS[topic].top) / 100);
-          const dist = Math.hypot(e.clientX - elX, e.clientY - elY);
-          return { topic, dist };
-        });
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+        const dx = e.clientX - cx;
+        const dy = e.clientY - cy;
+        const dist = Math.hypot(dx, dy);
+        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
-        distances.sort((a, b) => a.dist - b.dist);
-        const closest = distances[0];
+        // The Neutral Zone: If mouse is within 15vh of the center, do nothing.
+        const deadZone = window.innerHeight * 0.15;
 
-        const triggerRadius =
-          Math.min(window.innerWidth, window.innerHeight) * 0.35;
+        if (dist < deadZone) {
+          if (activeCluster !== null) setActiveCluster(null);
+          return;
+        }
 
-        if (closest.dist < triggerRadius) {
-          if (activeCluster !== closest.topic) {
-            setActiveCluster(closest.topic);
-          }
-        } else {
-          if (activeCluster !== null) {
-            setActiveCluster(null);
-          }
+        // Determine slice based on angle
+        let newZone = null;
+        if (angle > -150 && angle <= -30) newZone = "journalist";
+        else if (angle > -30 && angle <= 90) newZone = "educator";
+        else newZone = "artist";
+
+        if (newZone !== activeCluster) {
+          setActiveCluster(newZone);
         }
       };
 
@@ -72,13 +71,13 @@ export default function Portfolio({ category }) {
 
     const getBlurStyle = (clusterName) => {
       if (!activeCluster || activeCluster === clusterName) return "none";
-      return "blur(1px) opacity(0.5)";
+      return "blur(2px) opacity(0.5)";
     };
 
     const clusterStyle = (topic) => ({
       position: "absolute",
-      left: TOPIC_POSITIONS[topic].left,
-      top: TOPIC_POSITIONS[topic].top,
+      left: TOPICS[topic].left,
+      top: TOPICS[topic].top,
       transform: "translate(-50%, -50%)",
       transition: "filter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
       display: "flex",
@@ -106,23 +105,20 @@ export default function Portfolio({ category }) {
       gap: "0.5rem",
     });
 
-    // 🌊 THE NEW SOFT WAVE LOGIC
+    // 🌊 THE SOFT WAVE LOGIC (Now perfectly scales with the container)
     const getWaveStyle = (topic) => ({
       position: "absolute",
-      // Anchor the exact center of this massive div to the triangle corner
-      left: getCornerX(topic),
-      top: getCornerY(topic),
-      // Make it absolutely massive so it can cover any screen size
-      width: "250vmax",
-      height: "250vmax",
-      // A soft radial gradient: Solid in the center, transparent at the edges
-      background: `radial-gradient(circle closest-side, var(--${topic}) 40%, transparent 100%)`,
-      // Scale from 0 to 1, centered on the corner
-      transform: `translate(-50%, -50%) scale(${activeCluster === topic ? 1 : 0})`,
-      // Buttery smooth easing for the wave
-      transition: "transform 0.7s cubic-bezier(0.25, 1, 0.5, 1)",
+      left: CORNERS[topic].x,
+      top: CORNERS[topic].y,
+      width: "250%", // 250% of the container size ensures it covers everything
+      height: "250%",
+      background: `radial-gradient(circle closest-side, var(--${topic}) 10%, transparent 80%)`,
+      transform: `translate(-50%, -50%) scale(${activeCluster === topic ? 1 : 0.1})`,
+      opacity: activeCluster === topic ? 1 : 0,
+      transition:
+        "transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s ease-in-out",
       zIndex: activeCluster === topic ? 2 : 1,
-      pointerEvents: "none", // Ensures it doesn't block mouse clicks
+      pointerEvents: "none",
     });
 
     return (
@@ -132,53 +128,64 @@ export default function Portfolio({ category }) {
           height: "100vh",
           position: "relative",
           overflow: "hidden",
-          backgroundImage:
-            "radial-gradient(var(--secondary) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
         }}
       >
-        {/* THE STATIC BACKGROUND TRIANGLE CONTAINER */}
+        {/* THE RESPONSIVE MASTER CONTAINER */}
         <div
           style={{
             position: "absolute",
-            inset: 0,
-            zIndex: 0,
-            clipPath: `polygon(${getCorner("journalist")}, ${getCorner("artist")}, ${getCorner("educator")})`,
+            top: "48%", // Slightly above 50% to visually balance the bottom-heavy triangle
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: CONTAINER_SIZE,
+            aspectRatio: "1 / 1", // Keeps it a perfect square
           }}
         >
-          {/* Base Layer: The 3-Corner Gradient */}
+          {/* THE TRIANGLE CLIPPING MASK */}
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background: `
-              radial-gradient(circle at ${getCorner("journalist")}, var(--journalist) 0%, transparent 60%),
-              radial-gradient(circle at ${getCorner("artist")}, var(--artist) 0%, transparent 60%),
-              radial-gradient(circle at ${getCorner("educator")}, var(--educator) 0%, transparent 60%)
-            `,
-              backgroundColor: "var(--background)",
+              zIndex: 0,
+              clipPath: `polygon(${CORNERS.journalist.x} ${CORNERS.journalist.y}, ${CORNERS.artist.x} ${CORNERS.artist.y}, ${CORNERS.educator.x} ${CORNERS.educator.y})`,
             }}
-          />
+          >
+            {/* Base Layer: The 3-Corner Gradient */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: `
+                radial-gradient(circle at ${CORNERS.journalist.x} ${CORNERS.journalist.y}, var(--journalist) 0%, transparent 60%),
+                radial-gradient(circle at ${CORNERS.artist.x} ${CORNERS.artist.y}, var(--artist) 0%, transparent 60%),
+                radial-gradient(circle at ${CORNERS.educator.x} ${CORNERS.educator.y}, var(--educator) 0%, transparent 60%)
+              `,
+                backgroundColor: "var(--background)",
+              }}
+            />
 
-          {/* The New Soft Scaling Waves */}
-          <div style={getWaveStyle("journalist")} />
-          <div style={getWaveStyle("artist")} />
-          <div style={getWaveStyle("educator")} />
-        </div>
+            {/* The Soft Scaling Waves */}
+            <div style={getWaveStyle("journalist")} />
+            <div style={getWaveStyle("artist")} />
+            <div style={getWaveStyle("educator")} />
+          </div>
 
-        {/* TOP CENTER: JOURNALIST */}
-        <div style={clusterStyle("journalist")}>
-          <h2 style={{ color: "var(--journalist)", margin: 0 }}>Journalist</h2>
-        </div>
+          {/* TOP CENTER: JOURNALIST */}
+          <div style={clusterStyle("journalist")}>
+            <h2 style={{ color: "var(--journalist)", margin: 0 }}>
+              Journalist
+            </h2>
+          </div>
 
-        {/* BOTTOM LEFT: ARTIST */}
-        <div style={clusterStyle("artist")}>
-          <h2 style={{ color: "var(--artist)", margin: 0 }}>Artist</h2>
-        </div>
+          {/* BOTTOM LEFT: ARTIST */}
+          <div style={clusterStyle("artist")}>
+            <h2 style={{ color: "var(--artist)", margin: 0 }}>Artist</h2>
+          </div>
 
-        {/* BOTTOM RIGHT: EDUCATOR */}
-        <div style={clusterStyle("educator")}>
-          <h2 style={{ color: "var(--educator)", margin: 0 }}>Educator</h2>
+          {/* BOTTOM RIGHT: EDUCATOR */}
+          <div style={clusterStyle("educator")}>
+            <h2 style={{ color: "var(--educator)", margin: 0 }}>Educator</h2>
+          </div>
         </div>
       </div>
     );
