@@ -10,16 +10,24 @@ const dummyData = [
   { id: 4, title: "Abstract Sculpture", category: "artist" },
 ];
 
-const CONTAINER_SIZE = "clamp(350px, 45vmin, 700px)";
+const CONTAINER_SIZE = "clamp(150px, 45vmin, 700px)";
 const CORNERS = {
   artist: { x: "50%", y: "15%" },
   journalist: { x: "15%", y: "80%" },
   educator: { x: "85%", y: "80%" },
 };
-const TOPICS = {
+// 🛠️ DESKTOP OFFSETS
+const DESKTOP_TOPICS = {
   artist: { left: "50%", top: "-5%" },
   journalist: { left: "-5%", top: "95%" },
   educator: { left: "105%", top: "95%" },
+};
+
+// 🛠️ MOBILE OFFSETS (Pushed further out)
+const MOBILE_TOPICS = {
+  artist: { left: "50%", top: "-15%" },
+  journalist: { left: "-15%", top: "110%" },
+  educator: { left: "115%", top: "110%" },
 };
 
 export default function Portfolio({ category }) {
@@ -27,10 +35,20 @@ export default function Portfolio({ category }) {
   const t = translations[lang];
   const [activeCluster, setActiveCluster] = useState(null);
 
+  // Mobile detection state
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Listener to update mobile state on resize
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // 1. ALL HOOKS MUST BE AT THE TOP LEVEL
   useEffect(() => {
-    // Only run mouse logic if we are on the 'all' view
-    if (category !== "all") return;
+    // Only run mouse logic if we are on the 'all' view AND it is not mobile
+    if (category !== "all" || isMobile) return;
 
     const handleMouseMove = (e) => {
       const cx = window.innerWidth / 2;
@@ -58,9 +76,9 @@ export default function Portfolio({ category }) {
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [activeCluster, category]);
+  }, [activeCluster, category, isMobile]);
 
-  // 2. FAVICON LOGIC (Now safely at top level)
+  // 2. FAVICON LOGIC
   useEffect(() => {
     if (window.updateFavicon) {
       const state = category === "all" ? activeCluster || "all" : category;
@@ -78,6 +96,14 @@ export default function Portfolio({ category }) {
   // ==========================================
 
   if (category === "all") {
+    // ADJUST FONT SIZES HERE
+    const MOBILE_FONT_SIZE = "1.2rem";
+    const DESKTOP_FONT_SIZE = "2rem";
+    const currentFontSize = isMobile ? MOBILE_FONT_SIZE : DESKTOP_FONT_SIZE;
+
+    // OFFSETS SWITCHER
+    const currentTopics = isMobile ? MOBILE_TOPICS : DESKTOP_TOPICS;
+
     const getBlurStyle = (clusterName) => {
       if (!activeCluster || activeCluster === clusterName) return "none";
       return "blur(2px) opacity(0.5)";
@@ -85,8 +111,8 @@ export default function Portfolio({ category }) {
 
     const clusterStyle = (topic) => ({
       position: "absolute",
-      left: TOPICS[topic].left,
-      top: TOPICS[topic].top,
+      left: currentTopics[topic].left,
+      top: currentTopics[topic].top,
       transform: "translate(-50%, -50%)",
       transition: "filter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
       display: "flex",
@@ -112,8 +138,21 @@ export default function Portfolio({ category }) {
       pointerEvents: "none",
     });
 
+    // Mobile Tap Handlers
+    const handleTitleTap = (topic, e) => {
+      if (!isMobile) return;
+      e.stopPropagation(); // Stops the tap from reaching the background reset
+      setActiveCluster(topic);
+    };
+
+    const handleBackgroundTap = () => {
+      if (!isMobile) return;
+      setActiveCluster(null);
+    };
+
     return (
       <div
+        onClick={handleBackgroundTap} // ADDED: Reset on background tap anywhere
         style={{
           width: "100vw",
           height: "100vh",
@@ -152,39 +191,48 @@ export default function Portfolio({ category }) {
             <div style={getWaveStyle("educator")} />
           </div>
 
-          <div style={clusterStyle("artist")}>
+          <div
+            style={clusterStyle("artist")}
+            onClick={(e) => handleTitleTap("artist", e)}
+          >
             <h2
               style={{
                 color: "var(--artist)",
                 fontFamily: "BrandFont, sans-serif",
                 textTransform: "lowercase",
-                fontSize: "2rem",
+                fontSize: currentFontSize, // MODIFIED: Uses the variable defined above
                 margin: 0,
               }}
             >
               {t.artist}
             </h2>
           </div>
-          <div style={clusterStyle("journalist")}>
+          <div
+            style={clusterStyle("journalist")}
+            onClick={(e) => handleTitleTap("journalist", e)}
+          >
             <h2
               style={{
                 color: "var(--journalist)",
                 fontFamily: "BrandFont, sans-serif",
                 textTransform: "lowercase",
-                fontSize: "2rem",
+                fontSize: currentFontSize, // MODIFIED: Uses the variable defined above
                 margin: 0,
               }}
             >
               {t.journalist}
             </h2>
           </div>
-          <div style={clusterStyle("educator")}>
+          <div
+            style={clusterStyle("educator")}
+            onClick={(e) => handleTitleTap("educator", e)}
+          >
             <h2
               style={{
                 color: "var(--educator)",
                 fontFamily: "BrandFont, sans-serif",
                 textTransform: "lowercase",
-                fontSize: "2rem",
+                fontSize: currentFontSize, // MODIFIED: Uses the variable defined above
                 margin: 0,
               }}
             >
