@@ -19,9 +19,9 @@ const TOPIC_POSITIONS = {
 };
 
 const TRIANGLE_OFFSETS = {
-  journalist: { x: "-50px", y: "100px" },
-  artist: { x: "80px", y: "-70px" },
-  educator: { x: "-80px", y: "-80px" },
+  journalist: { x: "-50px", y: "50px" },
+  artist: { x: "80px", y: "-10px" },
+  educator: { x: "-80px", y: "-40px" },
 };
 
 // Split into X and Y so we can perfectly center our soft gradients
@@ -169,49 +169,16 @@ export default function Portfolio({ category }) {
         {/* TOP CENTER: JOURNALIST */}
         <div style={clusterStyle("journalist")}>
           <h2 style={{ color: "var(--journalist)", margin: 0 }}>Journalist</h2>
-          <div style={{ display: "flex", gap: "1rem" }}>
-            <Link to="/journalist" style={getIconStyle("var(--journalist)")}>
-              📰 <span style={{ fontSize: "0.8rem" }}>Articles</span>
-            </Link>
-            <button
-              style={getIconStyle("var(--journalist)")}
-              onClick={() => alert("Opened Notepad!")}
-            >
-              📝 <span style={{ fontSize: "0.8rem" }}>Drafts</span>
-            </button>
-          </div>
         </div>
 
         {/* BOTTOM LEFT: ARTIST */}
         <div style={clusterStyle("artist")}>
           <h2 style={{ color: "var(--artist)", margin: 0 }}>Artist</h2>
-          <div style={{ display: "flex", gap: "1rem" }}>
-            <Link to="/artist" style={getIconStyle("var(--artist)")}>
-              🎨 <span style={{ fontSize: "0.8rem" }}>Gallery</span>
-            </Link>
-            <button
-              style={getIconStyle("var(--artist)")}
-              onClick={() => alert("Playing Audio!")}
-            >
-              🎵 <span style={{ fontSize: "0.8rem" }}>Audio</span>
-            </button>
-          </div>
         </div>
 
         {/* BOTTOM RIGHT: EDUCATOR */}
         <div style={clusterStyle("educator")}>
           <h2 style={{ color: "var(--educator)", margin: 0 }}>Educator</h2>
-          <div style={{ display: "flex", gap: "1rem" }}>
-            <Link to="/educator" style={getIconStyle("var(--educator)")}>
-              📚 <span style={{ fontSize: "0.8rem" }}>Courses</span>
-            </Link>
-            <button
-              style={getIconStyle("var(--educator)")}
-              onClick={() => alert("Downloaded Syllabus!")}
-            >
-              📄 <span style={{ fontSize: "0.8rem" }}>Syllabus</span>
-            </button>
-          </div>
         </div>
       </div>
     );
