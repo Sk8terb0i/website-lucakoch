@@ -13,15 +13,15 @@ const dummyData = [
 // ==========================================
 
 const TOPIC_POSITIONS = {
-  journalist: { left: "55%", top: "12%" },
-  artist: { left: "15%", top: "55%" },
-  educator: { left: "85%", top: "85%" },
+  journalist: { left: "55%", top: "25%" },
+  artist: { left: "25%", top: "55%" },
+  educator: { left: "65%", top: "85%" },
 };
 
 const TRIANGLE_OFFSETS = {
   journalist: { x: "-50px", y: "50px" },
-  artist: { x: "80px", y: "-10px" },
-  educator: { x: "-80px", y: "-40px" },
+  artist: { x: "80px", y: "0px" },
+  educator: { x: "-60px", y: "-40px" },
 };
 
 // Split into X and Y so we can perfectly center our soft gradients
@@ -72,7 +72,7 @@ export default function Portfolio({ category }) {
 
     const getBlurStyle = (clusterName) => {
       if (!activeCluster || activeCluster === clusterName) return "none";
-      return "blur(6px) opacity(0.5)";
+      return "blur(1px) opacity(0.5)";
     };
 
     const clusterStyle = (topic) => ({
