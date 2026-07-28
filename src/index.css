@@ -2,14 +2,22 @@
    1. VARIABLES & COLORS
    ============================================================ */
 :root {
-  --text: #1f1a0e;
-  --background: #f2f0e7;
+  --text: #141c09;
+  --background: #fff7fc;
+  /* Retaining some base colors from original or updating them */
   --primary: #6e7263;
   --secondary: #dfd9e8;
   --accent: #fcfcfc;
-  --journalist: #81a431;
-  --artist: #e34ed9;
-  --educator: #885fdb;
+  
+  /* New Category Colors */
+  --art: #f3a1e5;
+  --education: #b1d182;
+  --journalism: #ebcc19;
+
+  /* Mapped for backwards compatibility with Portfolio.jsx */
+  --artist: var(--art);
+  --educator: var(--education);
+  --journalist: var(--journalism);
 }
 
 /* ============================================================
