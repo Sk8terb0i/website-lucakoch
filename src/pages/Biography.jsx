@@ -11,16 +11,12 @@ export default function Biography() {
         style={{
           color: "var(--text)",
           fontFamily: "BrandFont, sans-serif",
-          textTransform: "lowercase",
-          borderBottom: "3px solid var(--primary)",
-          paddingBottom: "0.5rem",
+          fontSize: "3rem",
+          margin: 0,
         }}
       >
         {t.biography}
       </h2>
-      <p style={{ fontFamily: "Satoshi, sans-serif", lineHeight: "1.6" }}>
-        This is where your biography text will go.
-      </p>
     </div>
   );
 }

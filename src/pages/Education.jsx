@@ -3,101 +3,128 @@ import { Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { translations } from "../translations";
 
-const educationItems = [{ id: 2, title: "Guest Lecture at Uni Zurich" }];
-
 export default function Education() {
   const { lang } = useLanguage();
   const t = translations[lang];
 
   useEffect(() => {
-    if (window.updateFavicon) {
-      window.updateFavicon("educator");
-    }
+    if (window.updateFavicon) window.updateFavicon("educator");
   }, []);
 
+  const subPages = [
+    { title: "Atelier Sinnesküche", path: "/education/atelier-sinneskueche" },
+    { title: "WIAM", path: "/education/wiam" },
+    { title: "Gesangsküche", path: "/education/gesangskueche" },
+    { title: t.choirProjects, path: "/education/chorprojekte" },
+  ];
+
+  const externalLinks = [
+    { title: "jugendjazzorchester.ch", url: "https://jugendjazzorchester.ch" },
+    {
+      title: t.moodsCouncil,
+      url: "https://www.moods.ch/das-moods/ueber-uns/team/musiker-innenrat",
+    },
+  ];
+
   return (
-    <div style={{ maxWidth: "800px", margin: "10vh auto", padding: "2rem" }}>
-      <header style={{ marginBottom: "3rem", textAlign: "center" }}>
+    <div
+      style={{
+        maxWidth: "800px",
+        margin: "12vh auto 8vh auto",
+        padding: "2rem",
+      }}
+    >
+      <header style={{ marginBottom: "3rem" }}>
         <h1
           style={{
-            fontSize: "2.5rem",
-            marginBottom: "1rem",
-            color: "var(--text)",
-            textTransform: "lowercase",
+            fontSize: "3.5rem",
+            color: "var(--education)",
             fontFamily: "BrandFont, sans-serif",
+            textTransform: "lowercase",
+            margin: 0,
           }}
         >
-          {t.siteTitle}
+          {t.educator}
         </h1>
-        <nav style={{ display: "flex", justifyContent: "center" }}>
-          <Link
-            to="/"
-            style={{
-              padding: "0.5rem 1rem",
-              backgroundColor: "var(--secondary)",
-              color: "var(--text)",
-              borderRadius: "4px",
-              fontWeight: "bold",
-              fontSize: "0.85rem",
-              fontFamily: "Satoshi, sans-serif",
-              textDecoration: "none",
-            }}
-          >
-            {t.backToDesktop}
-          </Link>
-        </nav>
       </header>
 
-      <main>
-        <h2
-          style={{
-            borderBottom: "3px solid var(--education)",
-            paddingBottom: "0.5rem",
-            color: "var(--education)",
-            textTransform: "lowercase",
-            fontFamily: "BrandFont, sans-serif",
-          }}
-        >
-          {t.education}
-        </h2>
+      <main style={{ display: "flex", flexDirection: "column", gap: "3rem" }}>
+        <section>
+          <h2
+            style={{
+              fontSize: "1rem",
+              letterSpacing: "0.08em",
+              opacity: 0.5,
+              marginBottom: "1.5rem",
+            }}
+          >
+            UNTERSEITEN
+          </h2>
+          <div style={{ display: "grid", gap: "1rem" }}>
+            {subPages.map((sub) => (
+              <Link
+                key={sub.title}
+                to={sub.path}
+                style={{
+                  padding: "1.25rem 1.5rem",
+                  backgroundColor: "var(--accent)",
+                  border: "1px solid var(--secondary)",
+                  borderLeft: "6px solid var(--education)",
+                  borderRadius: "8px",
+                  textDecoration: "none",
+                  color: "var(--text)",
+                  fontFamily: "Satoshi, sans-serif",
+                  fontSize: "1.2rem",
+                  transition: "transform 0.2s ease",
+                }}
+                onMouseOver={(e) =>
+                  (e.currentTarget.style.transform = "translateX(6px)")
+                }
+                onMouseOut={(e) =>
+                  (e.currentTarget.style.transform = "translateX(0)")
+                }
+              >
+                {sub.title}
+              </Link>
+            ))}
+          </div>
+        </section>
 
-        <div style={{ display: "grid", gap: "1.5rem", marginTop: "2rem" }}>
-          {educationItems.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                backgroundColor: "var(--accent)",
-                border: "1px solid var(--secondary)",
-                borderLeft: "8px solid var(--education)",
-                padding: "1.5rem",
-                borderRadius: "8px",
-              }}
-            >
-              <h3
+        <section>
+          <h2
+            style={{
+              fontSize: "1rem",
+              letterSpacing: "0.08em",
+              opacity: 0.5,
+              marginBottom: "1.5rem",
+            }}
+          >
+            DIREKTE LINKS
+          </h2>
+          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+            {externalLinks.map((ext) => (
+              <a
+                key={ext.title}
+                href={ext.url}
+                target="_blank"
+                rel="noreferrer"
                 style={{
-                  margin: "0 0 0.5rem 0",
+                  padding: "0.75rem 1.25rem",
+                  backgroundColor: "var(--background)",
+                  border: "1px solid var(--text)",
+                  borderRadius: "30px",
                   color: "var(--text)",
+                  textDecoration: "none",
+                  fontSize: "0.9rem",
+                  fontWeight: "600",
                   fontFamily: "Satoshi, sans-serif",
                 }}
               >
-                {item.title}
-              </h3>
-              <span
-                style={{
-                  backgroundColor: "var(--secondary)",
-                  color: "var(--text)",
-                  padding: "0.25rem 0.5rem",
-                  borderRadius: "4px",
-                  fontSize: "0.75rem",
-                  textTransform: "lowercase",
-                  fontFamily: "Satoshi, sans-serif",
-                }}
-              >
-                {t.education}
-              </span>
-            </div>
-          ))}
-        </div>
+                {ext.title} ↗
+              </a>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );

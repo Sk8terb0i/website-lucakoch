@@ -1,46 +1,45 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { translations } from "../translations";
 
-const CONTAINER_SIZE = "clamp(150px, 45vmin, 700px)";
+const CONTAINER_SIZE = "clamp(220px, 45vmin, 600px)";
+
 const CORNERS = {
   artist: { x: "50%", y: "15%" },
   journalist: { x: "15%", y: "80%" },
   educator: { x: "85%", y: "80%" },
 };
 
-// DESKTOP OFFSETS
+// Anchors
 const DESKTOP_TOPICS = {
   artist: { left: "50%", top: "-5%" },
   journalist: { left: "-5%", top: "95%" },
   educator: { left: "105%", top: "95%" },
 };
 
-// MOBILE OFFSETS
 const MOBILE_TOPICS = {
-  artist: { left: "50%", top: "-15%" },
-  journalist: { left: "-15%", top: "110%" },
-  educator: { left: "115%", top: "110%" },
+  artist: { left: "50%", top: "-10%" },
+  journalist: { left: "12%", top: "105%" },
+  educator: { left: "88%", top: "105%" },
 };
 
 export default function Portfolio() {
   const { lang } = useLanguage();
   const t = translations[lang];
   const [activeCluster, setActiveCluster] = useState(null);
-
-  // Mobile detection state
+  const [isTriangleHovered, setIsTriangleHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Listener to update mobile state on resize
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 1. Mouse movement hover zone detection (Desktop only)
+  // Desktop Mouse Zone Hover Detection
   useEffect(() => {
-    if (isMobile) return;
+    if (isMobile || activeCluster === "all") return;
 
     const handleMouseMove = (e) => {
       const cx = window.innerWidth / 2;
@@ -51,10 +50,12 @@ export default function Portfolio() {
       const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
       const minRadius = window.innerHeight * 0.15;
-      const maxRadius = window.innerHeight * 0.4;
+      const maxRadius = window.innerHeight * 0.42;
 
       if (dist < minRadius || dist > maxRadius) {
-        if (activeCluster !== null) setActiveCluster(null);
+        if (activeCluster !== null && activeCluster !== "all") {
+          setActiveCluster(null);
+        }
         return;
       }
 
@@ -70,71 +71,165 @@ export default function Portfolio() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [activeCluster, isMobile]);
 
-  // 2. Favicon logic
   useEffect(() => {
     if (window.updateFavicon) {
       window.updateFavicon(activeCluster || "all");
     }
   }, [activeCluster]);
 
-  const MOBILE_FONT_SIZE = "1.2rem";
-  const DESKTOP_FONT_SIZE = "2rem";
-  const currentFontSize = isMobile ? MOBILE_FONT_SIZE : DESKTOP_FONT_SIZE;
+  const handleTriangleClick = (e) => {
+    e.stopPropagation();
+    setActiveCluster((prev) => (prev === "all" ? null : "all"));
+  };
+
+  const handleTopicClick = (topic, e) => {
+    e.stopPropagation();
+    setActiveCluster((prev) => (prev === topic ? null : topic));
+  };
+
   const currentTopics = isMobile ? MOBILE_TOPICS : DESKTOP_TOPICS;
+  const isVisible = (topic) =>
+    activeCluster === "all" || activeCluster === topic;
 
   const getBlurStyle = (clusterName) => {
-    if (!activeCluster || activeCluster === clusterName) return "none";
+    if (
+      !activeCluster ||
+      activeCluster === "all" ||
+      activeCluster === clusterName
+    ) {
+      return "none";
+    }
     return "blur(2px) opacity(0.5)";
   };
 
-  const clusterStyle = (topic) => ({
-    position: "absolute",
-    left: currentTopics[topic].left,
-    top: currentTopics[topic].top,
-    transform: "translate(-50%, -50%)",
-    transition: "filter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "1rem",
-    zIndex: 10,
-    filter: getBlurStyle(topic),
-  });
+  // RECALIBRATED EXPANSION WAVE LOGIC
+  const getWaveStyle = (topic) => {
+    const isSingleActive = activeCluster === topic;
+    const isAllActive = activeCluster === "all";
 
-  const getWaveStyle = (topic) => ({
-    position: "absolute",
-    left: CORNERS[topic].x,
-    top: CORNERS[topic].y,
-    width: "250%",
-    height: "250%",
-    background: `radial-gradient(circle closest-side, var(--${topic}) 10%, transparent 80%)`,
-    transform: `translate(-50%, -50%) scale(${activeCluster === topic ? 1 : 0.1})`,
-    opacity: activeCluster === topic ? 1 : 0,
-    transition:
-      "transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s ease-in-out",
-    zIndex: activeCluster === topic ? 2 : 1,
-    pointerEvents: "none",
-  });
-
-  const handleTitleTap = (topic, e) => {
-    if (!isMobile) return;
-    e.stopPropagation();
-    setActiveCluster(topic);
+    return {
+      position: "absolute",
+      left: CORNERS[topic].x,
+      top: CORNERS[topic].y,
+      width: "250%",
+      height: "250%",
+      background: `radial-gradient(circle closest-side, var(--${topic}) 12%, transparent 75%)`,
+      /* Scale 1.1 for single topic focus, 0.68 when ALL active to meet vividly in the middle */
+      transform: `translate(-50%, -50%) scale(${
+        isSingleActive ? 1.1 : isAllActive ? 0.68 : 0.1
+      })`,
+      opacity: isSingleActive ? 0.9 : isAllActive ? 0.72 : 0,
+      transition:
+        "transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s ease-in-out",
+      zIndex: isSingleActive ? 3 : 2,
+      pointerEvents: "none",
+    };
   };
 
-  const handleBackgroundTap = () => {
-    if (!isMobile) return;
-    setActiveCluster(null);
+  const clusterData = {
+    artist: [
+      {
+        title: "SenSing",
+        path: "/art/sensing",
+        x: isMobile ? 0 : 0,
+        y: isMobile ? -38 : -55,
+      },
+      {
+        title: "Pistache",
+        path: "/art/pistache",
+        x: isMobile ? -75 : -120,
+        y: isMobile ? -20 : -30,
+      },
+      {
+        title: "Brassmaster Flash",
+        path: "/art/brassmaster-flash",
+        x: isMobile ? 75 : 120,
+        y: isMobile ? -20 : -30,
+      },
+      {
+        title: "High D",
+        path: "/art/high-d",
+        x: isMobile ? -85 : -140,
+        y: isMobile ? 5 : 15,
+      },
+      {
+        title: "Worldbuzzpoems",
+        path: "/art/worldbuzzpoems",
+        x: isMobile ? 85 : 140,
+        y: isMobile ? 5 : 15,
+      },
+    ],
+    journalist: [
+      {
+        title: "Audio",
+        path: "/journalism/audio",
+        x: isMobile ? -25 : -110,
+        y: isMobile ? 28 : -40,
+      },
+      {
+        title: t.articles,
+        path: "/journalism/artikel",
+        x: isMobile ? 35 : 90,
+        y: isMobile ? 28 : -40,
+      },
+      {
+        title: "TV",
+        path: "/journalism/tv",
+        x: isMobile ? 5 : 0,
+        y: isMobile ? 52 : 45,
+      },
+    ],
+    educator: [
+      {
+        title: "Atelier Sinnesküche",
+        path: "/education/atelier-sinneskueche",
+        x: isMobile ? -45 : -120,
+        y: isMobile ? 28 : -45,
+      },
+      {
+        title: "WIAM",
+        path: "/education/wiam",
+        x: isMobile ? 45 : 100,
+        y: isMobile ? 28 : -45,
+      },
+      {
+        title: "Gesangsküche",
+        path: "/education/gesangskueche",
+        x: isMobile ? -45 : -130,
+        y: isMobile ? 52 : 40,
+      },
+      {
+        title: t.choirProjects,
+        path: "/education/chorprojekte",
+        x: isMobile ? 45 : 110,
+        y: isMobile ? 52 : 40,
+      },
+      {
+        title: "Jugendjazzorchester.ch",
+        url: "https://jugendjazzorchester.ch",
+        isExternal: true,
+        x: isMobile ? 0 : -80,
+        y: isMobile ? 76 : 85,
+      },
+      {
+        title: t.moodsCouncil,
+        url: "https://www.moods.ch/das-moods/ueber-uns/team/musiker-innenrat",
+        isExternal: true,
+        x: isMobile ? 0 : -10,
+        y: isMobile ? 102 : 118,
+      },
+    ],
   };
 
   return (
     <div
-      onClick={handleBackgroundTap}
+      onClick={() => setActiveCluster(null)}
       style={{
         width: "100vw",
         height: "100vh",
         position: "relative",
         overflow: "hidden",
+        backgroundColor: "var(--background)",
       }}
     >
       <div
@@ -147,12 +242,23 @@ export default function Portfolio() {
           aspectRatio: "1 / 1",
         }}
       >
+        {/* INTERACTIVE GRADIENT TRIANGLE */}
         <div
+          onClick={handleTriangleClick}
+          onMouseEnter={() => setIsTriangleHovered(true)}
+          onMouseLeave={() => setIsTriangleHovered(false)}
           style={{
             position: "absolute",
             inset: 0,
-            zIndex: 0,
+            zIndex: 5,
+            cursor: "pointer",
             clipPath: `polygon(${CORNERS.artist.x} ${CORNERS.artist.y}, ${CORNERS.journalist.x} ${CORNERS.journalist.y}, ${CORNERS.educator.x} ${CORNERS.educator.y})`,
+            transform: isTriangleHovered ? "scale(1.03)" : "scale(1)",
+            filter: isTriangleHovered
+              ? "brightness(1.08) drop-shadow(0 0 15px rgba(0,0,0,0.12))"
+              : "none",
+            transition:
+              "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s ease",
           }}
         >
           <div
@@ -163,59 +269,169 @@ export default function Portfolio() {
               backgroundColor: "var(--background)",
             }}
           />
+
           <div style={getWaveStyle("artist")} />
           <div style={getWaveStyle("journalist")} />
           <div style={getWaveStyle("educator")} />
         </div>
 
-        <div
-          style={clusterStyle("artist")}
-          onClick={(e) => handleTitleTap("artist", e)}
-        >
-          <h2
-            style={{
-              color: "var(--artist)",
-              fontFamily: "BrandFont, sans-serif",
-              textTransform: "lowercase",
-              fontSize: currentFontSize,
-              margin: 0,
-            }}
-          >
-            {t.artist}
-          </h2>
-        </div>
-        <div
-          style={clusterStyle("journalist")}
-          onClick={(e) => handleTitleTap("journalist", e)}
-        >
-          <h2
-            style={{
-              color: "var(--journalist)",
-              fontFamily: "BrandFont, sans-serif",
-              textTransform: "lowercase",
-              fontSize: currentFontSize,
-              margin: 0,
-            }}
-          >
-            {t.journalist}
-          </h2>
-        </div>
-        <div
-          style={clusterStyle("educator")}
-          onClick={(e) => handleTitleTap("educator", e)}
-        >
-          <h2
-            style={{
-              color: "var(--educator)",
-              fontFamily: "BrandFont, sans-serif",
-              textTransform: "lowercase",
-              fontSize: currentFontSize,
-              margin: 0,
-            }}
-          >
-            {t.educator}
-          </h2>
-        </div>
+        {/* TOPICS & WORD CLUSTER LINKS */}
+        {["artist", "journalist", "educator"].map((topic) => {
+          const active = isVisible(topic);
+          const links = clusterData[topic];
+
+          return (
+            <div
+              key={topic}
+              style={{
+                position: "absolute",
+                left: currentTopics[topic].left,
+                top: currentTopics[topic].top,
+                transform: "translate(-50%, -50%)",
+                zIndex: 10,
+                filter: getBlurStyle(topic),
+                transition: "filter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
+              }}
+            >
+              {/* MAIN TOPIC HEADING + ABSOLUTE NAV ARROW */}
+              <div
+                style={{
+                  position: "relative",
+                  display: "inline-flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <h2
+                  onClick={(e) => handleTopicClick(topic, e)}
+                  style={{
+                    color: `var(--${topic})`,
+                    fontFamily: "BrandFont, sans-serif",
+                    textTransform: "lowercase",
+                    fontSize: isMobile ? "1.3rem" : "2.2rem",
+                    margin: 0,
+                    cursor: "pointer",
+                    userSelect: "none",
+                    whiteSpace: "nowrap",
+                    transition: "transform 0.3s ease",
+                  }}
+                  onMouseOver={(e) =>
+                    (e.currentTarget.style.transform = "scale(1.04)")
+                  }
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                  }
+                >
+                  {t[topic]}
+                </h2>
+
+                <Link
+                  to={
+                    topic === "artist"
+                      ? "/art"
+                      : topic === "educator"
+                        ? "/education"
+                        : "/journalism"
+                  }
+                  onClick={(e) => e.stopPropagation()}
+                  title={`Go to ${t[topic]} page`}
+                  style={{
+                    position: "absolute",
+                    left: "calc(100% + 4px)",
+                    top: "50%",
+                    textDecoration: "none",
+                    color: `var(--${topic})`,
+                    fontFamily: "BrandFont, sans-serif",
+                    fontSize: isMobile ? "1.1rem" : "1.6rem",
+                    lineHeight: 1,
+                    opacity: active ? 1 : 0,
+                    pointerEvents: active ? "auto" : "none",
+                    transform: active
+                      ? "translateY(-50%) translateX(0)"
+                      : "translateY(-50%) translateX(-6px)",
+                    transition: "all 0.35s cubic-bezier(0.25, 1, 0.5, 1)",
+                    whiteSpace: "nowrap",
+                  }}
+                  onMouseOver={(e) =>
+                    (e.currentTarget.style.transform =
+                      "translateY(-50%) translateX(4px)")
+                  }
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.transform =
+                      "translateY(-50%) translateX(0)")
+                  }
+                >
+                  →
+                </Link>
+              </div>
+
+              {/* FLOATING WORD CLUSTER WITH MARKER HIGHLIGHT */}
+              {links.map((link) => {
+                const linkStyle = {
+                  position: "absolute",
+                  left: "50%",
+                  top: "50%",
+                  transform: active
+                    ? `translate(calc(-50% + ${link.x}px), calc(-50% + ${link.y}px)) scale(1)`
+                    : "translate(-50%, -50%) scale(0.6)",
+                  opacity: active ? 1 : 0,
+                  pointerEvents: active ? "auto" : "none",
+                  transition: "all 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
+                  whiteSpace: "nowrap",
+                  textDecoration: link.isExternal
+                    ? "underline dashed rgba(20,28,9,0.3)"
+                    : "none",
+                  fontFamily: "'Satoshi', sans-serif",
+                  fontSize: isMobile ? "0.72rem" : "0.88rem",
+                  fontWeight: link.isExternal ? "400" : "500",
+                  fontStyle: link.isExternal ? "italic" : "normal",
+                  color: "var(--text)",
+                  backgroundColor: `color-mix(in srgb, var(--${topic}) 22%, transparent)`,
+                  borderRadius: "2px 4px 2px 3px",
+                  padding: "0.12rem 0.45rem",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+                };
+
+                return link.isExternal ? (
+                  <a
+                    key={link.title}
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={linkStyle}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = `color-mix(in srgb, var(--${topic}) 38%, transparent)`;
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = `color-mix(in srgb, var(--${topic}) 22%, transparent)`;
+                    }}
+                  >
+                    {link.title}{" "}
+                    <span style={{ fontSize: "0.75em", opacity: 0.7 }}>↗</span>
+                  </a>
+                ) : (
+                  <Link
+                    key={link.title}
+                    to={link.path}
+                    onClick={(e) => e.stopPropagation()}
+                    style={linkStyle}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = `color-mix(in srgb, var(--${topic}) 38%, transparent)`;
+                      e.currentTarget.style.color = `var(--${topic})`;
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = `color-mix(in srgb, var(--${topic}) 22%, transparent)`;
+                      e.currentTarget.style.color = "var(--text)";
+                    }}
+                  >
+                    {link.title}
+                  </Link>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

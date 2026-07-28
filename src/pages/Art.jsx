@@ -3,102 +3,81 @@ import { Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { translations } from "../translations";
 
-const artItems = [
-  { id: 1, title: "Oil Painting Exhibition" },
-  { id: 4, title: "Abstract Sculpture" },
-];
-
 export default function Art() {
   const { lang } = useLanguage();
   const t = translations[lang];
 
   useEffect(() => {
-    if (window.updateFavicon) {
-      window.updateFavicon("artist");
-    }
+    if (window.updateFavicon) window.updateFavicon("artist");
   }, []);
 
+  const subPages = [
+    { title: "pistache", path: "/art/pistache" },
+    { title: "brassmaster flash", path: "/art/brassmaster-flash" },
+    { title: "high D", path: "/art/high-d" },
+    { title: "SenSing", path: "/art/sensing" },
+    { title: "worldbuzzpoems", path: "/art/worldbuzzpoems" },
+  ];
+
   return (
-    <div style={{ maxWidth: "800px", margin: "10vh auto", padding: "2rem" }}>
-      <header style={{ marginBottom: "3rem", textAlign: "center" }}>
+    <div
+      style={{
+        maxWidth: "800px",
+        margin: "12vh auto 8vh auto",
+        padding: "2rem",
+      }}
+    >
+      <header style={{ marginBottom: "3rem" }}>
         <h1
           style={{
-            fontSize: "2.5rem",
-            marginBottom: "1rem",
-            color: "var(--text)",
-            textTransform: "lowercase",
+            fontSize: "3.5rem",
+            color: "var(--art)",
             fontFamily: "BrandFont, sans-serif",
+            textTransform: "lowercase",
+            margin: 0,
           }}
         >
-          {t.siteTitle}
+          {t.artist}
         </h1>
-        <nav style={{ display: "flex", justifyContent: "center" }}>
-          <Link
-            to="/"
-            style={{
-              padding: "0.5rem 1rem",
-              backgroundColor: "var(--secondary)",
-              color: "var(--text)",
-              borderRadius: "4px",
-              fontWeight: "bold",
-              fontSize: "0.85rem",
-              fontFamily: "Satoshi, sans-serif",
-              textDecoration: "none",
-            }}
-          >
-            {t.backToDesktop}
-          </Link>
-        </nav>
       </header>
 
       <main>
         <h2
           style={{
-            borderBottom: "3px solid var(--art)",
-            paddingBottom: "0.5rem",
-            color: "var(--art)",
-            textTransform: "lowercase",
-            fontFamily: "BrandFont, sans-serif",
+            fontSize: "1rem",
+            letterSpacing: "0.08em",
+            opacity: 0.5,
+            marginBottom: "1.5rem",
           }}
         >
-          {t.art}
+          UNTERSEITEN
         </h2>
-
-        <div style={{ display: "grid", gap: "1.5rem", marginTop: "2rem" }}>
-          {artItems.map((item) => (
-            <div
-              key={item.id}
+        <div style={{ display: "grid", gap: "1rem" }}>
+          {subPages.map((sub) => (
+            <Link
+              key={sub.title}
+              to={sub.path}
               style={{
+                padding: "1.25rem 1.5rem",
                 backgroundColor: "var(--accent)",
                 border: "1px solid var(--secondary)",
-                borderLeft: "8px solid var(--art)",
-                padding: "1.5rem",
+                borderLeft: "6px solid var(--art)",
                 borderRadius: "8px",
+                textDecoration: "none",
+                color: "var(--text)",
+                fontFamily: "Satoshi, sans-serif",
+                fontSize: "1.2rem",
+                transition: "transform 0.2s ease",
               }}
+              onMouseOver={(e) =>
+                (e.currentTarget.style.transform = "translateX(6px)")
+              }
+              onMouseOut={(e) =>
+                (e.currentTarget.style.transform = "translateX(0)")
+              }
             >
-              <h3
-                style={{
-                  margin: "0 0 0.5rem 0",
-                  color: "var(--text)",
-                  fontFamily: "Satoshi, sans-serif",
-                }}
-              >
-                {item.title}
-              </h3>
-              <span
-                style={{
-                  backgroundColor: "var(--secondary)",
-                  color: "var(--text)",
-                  padding: "0.25rem 0.5rem",
-                  borderRadius: "4px",
-                  fontSize: "0.75rem",
-                  textTransform: "lowercase",
-                  fontFamily: "Satoshi, sans-serif",
-                }}
-              >
-                {t.art}
-              </span>
-            </div>
+              {sub.title}
+            </Link>
           ))}
         </div>
       </main>

@@ -1,12 +1,12 @@
 export const translations = {
   EN: {
-    journalist: "Journalist",
-    artist: "Artist",
-    educator: "Educator",
+    journalist: "Journalism",
+    artist: "Art",
+    educator: "Education",
     backToDesktop: "Back to Desktop",
     siteTitle: "Luca Koch Portfolio",
     noItems: "No items found for this category.",
-    // New menu items
+    // Menu & Page Titles
     biography: "Biography",
     art: "Art",
     education: "Education",
@@ -16,15 +16,19 @@ export const translations = {
     calendar: "Calendar",
     contact: "Contact",
     shop: "Shop",
+    // Subpage & Link Titles
+    articles: "Articles",
+    choirProjects: "Choir Projects",
+    moodsCouncil: "Musicians' Council Moods",
   },
   DE: {
-    journalist: "Journalist:in",
-    artist: "Künstler:in",
-    educator: "Dozent:in",
+    journalist: "Journalismus",
+    artist: "Kunst",
+    educator: "Bildung",
     backToDesktop: "Zurück zum Desktop",
     siteTitle: "Luca Koch Portfolio",
     noItems: "Keine Einträge in dieser Kategorie gefunden.",
-    // New menu items
+    // Menu & Page Titles
     biography: "Biografie",
     art: "Kunst",
     education: "Bildung",
@@ -34,15 +38,19 @@ export const translations = {
     calendar: "Kalender",
     contact: "Kontakt",
     shop: "Shop",
+    // Subpage & Link Titles
+    articles: "Artikel",
+    choirProjects: "Chorprojekte",
+    moodsCouncil: "Musiker*innenrat Moods",
   },
   FR: {
-    journalist: "Journaliste",
-    artist: "Artiste",
-    educator: "Pédagogue",
+    journalist: "Journalisme",
+    artist: "Art",
+    educator: "Éducation",
     backToDesktop: "Retour au bureau",
     siteTitle: "Portfolio de Luca Koch",
     noItems: "Aucun élément trouvé pour cette catégorie.",
-    // New menu items
+    // Menu & Page Titles
     biography: "Biographie",
     art: "Art",
     education: "Éducation",
@@ -52,5 +60,9 @@ export const translations = {
     calendar: "Calendrier",
     contact: "Contact",
     shop: "Boutique",
+    // Subpage & Link Titles
+    articles: "Articles",
+    choirProjects: "Projets de Chœur",
+    moodsCouncil: "Conseil des Musicien·ne·s de Moods",
   },
 };

@@ -1,3 +1,22 @@
+import { useLanguage } from "../context/LanguageContext";
+import { translations } from "../translations";
+
 export default function Shop() {
-  return <div>Shop</div>;
+  const { lang } = useLanguage();
+  const t = translations[lang];
+
+  return (
+    <div style={{ maxWidth: "800px", margin: "15vh auto", padding: "2rem" }}>
+      <h2
+        style={{
+          color: "var(--text)",
+          fontFamily: "BrandFont, sans-serif",
+          fontSize: "3rem",
+          margin: 0,
+        }}
+      >
+        {t.shop}
+      </h2>
+    </div>
+  );
 }
