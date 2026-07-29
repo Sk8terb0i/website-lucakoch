@@ -650,13 +650,18 @@ export default function Portfolio() {
                 width: slot.width,
                 opacity: currentOpacity,
                 filter: `blur(${slot.blur}) saturate(${currentSaturate})`,
-                transform: `translate(-50%, -50%) scale(${slot.scale})`,
+                // Force hardware acceleration for vastly smoother mobile transitions
+                transform: `translate3d(-50%, -50%, 0) scale(${slot.scale})`,
                 borderRadius: BG_CONFIG.borderRadius,
                 boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
-                zIndex: slotZIndex, // Near images render in front of mid/far images
+                zIndex: slotZIndex,
                 transition:
                   "top 1.6s cubic-bezier(0.16, 1, 0.3, 1), left 1.6s cubic-bezier(0.16, 1, 0.3, 1), transform 1.6s cubic-bezier(0.16, 1, 0.3, 1), filter 1.6s ease-in-out, opacity 1.2s ease-in-out, width 1.6s cubic-bezier(0.16, 1, 0.3, 1)",
                 overflow: "hidden",
+                // Performance optimizations
+                willChange: "transform, opacity, filter, top, left, width",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
               }}
             >
               {slot.src && (
@@ -670,6 +675,7 @@ export default function Portfolio() {
                     objectFit: "cover",
                     borderRadius: BG_CONFIG.borderRadius,
                     transition: "opacity 0.8s ease-in-out",
+                    willChange: "opacity", // Performance optimization
                   }}
                 />
               )}
