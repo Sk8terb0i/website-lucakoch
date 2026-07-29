@@ -5,6 +5,90 @@ import { translations } from "../translations";
 
 const CONTAINER_SIZE = "clamp(220px, 45vmin, 600px)";
 
+// ----------------------------------------------------------------------
+// 🎛️ EASY BACKGROUND IMAGES CONFIGURATION
+// ----------------------------------------------------------------------
+const BG_CONFIG = {
+  // Image quantity range
+  minImages: 3,
+  maxImages: 5,
+
+  // Image size limits (in px)
+  desktopWidthMin: 180,
+  desktopWidthMax: 250,
+  mobileWidthMin: 90,
+  mobileWidthMax: 120,
+
+  // Styling
+  borderRadius: "1px",
+
+  // --------------------------------------------------------------------
+  // 🎨 3D DEPTH PROFILES: SATURATION, OPACITY & Z-INDEX CONFIGURATION
+  // --------------------------------------------------------------------
+  depths: [
+    // Depth 0: Foreground / Nearest (Highest zIndex so it overlaps other images)
+    {
+      blur: "0px",
+      scale: 1.2,
+      saturate: { zoomedOut: "100%", zoomedIn: "95%" },
+      opacity: { zoomedOut: 0.9, zoomedIn: 0.8 },
+      zIndex: 3,
+    },
+    // Depth 1: Mid Distance
+    {
+      blur: "2px",
+      scale: 0.9,
+      saturate: { zoomedOut: "85%", zoomedIn: "80%" },
+      opacity: { zoomedOut: 0.7, zoomedIn: 0.6 },
+      zIndex: 2,
+    },
+    // Depth 2: Far Away
+    {
+      blur: "6px",
+      scale: 0.7,
+      saturate: { zoomedOut: "75%", zoomedIn: "70%" },
+      opacity: { zoomedOut: 0.5, zoomedIn: 0.4 },
+      zIndex: 1,
+    },
+  ],
+
+  // --------------------------------------------------------------------
+  // 📍 POSITION ZONES (Dodges all pink marked zones while hugging the triangle)
+  // Categorized into Top (top <= 30%), Bottom (top >= 70%), and Middle
+  // --------------------------------------------------------------------
+  positions: [
+    // TOP ZONE (top <= 30%)
+    { id: "top-left-sub", top: "12%", left: "10%", zone: "top" }, // Under logo, left of 'art'
+    { id: "top-right-sub", top: "12%", left: "90%", zone: "top" }, // Under header controls, right of 'art'
+    { id: "top-inner-left", top: "22%", left: "28%", zone: "top" }, // Close to upper-left triangle slope
+    { id: "top-inner-right", top: "22%", left: "72%", zone: "top" }, // Close to upper-right triangle slope
+
+    // BOTTOM ZONE (top >= 70%)
+    { id: "bot-left-bleed", top: "86%", left: "10%", zone: "bottom" }, // Below 'journalism'
+    { id: "bot-right-bleed", top: "86%", left: "90%", zone: "bottom" }, // Below 'education'
+    { id: "bot-center-bleed", top: "92%", left: "50%", zone: "bottom" }, // Bleeding off bottom-center edge
+
+    // MIDDLE ZONE (Close to triangle sides + edge bleed positions)
+    { id: "mid-left-close", top: "45%", left: "16%", zone: "mid" }, // Hugs left triangle edge horizontally
+    { id: "mid-right-close", top: "45%", left: "84%", zone: "mid" }, // Hugs right triangle edge horizontally
+    { id: "mid-far-left-edge", top: "42%", left: "2%", zone: "mid" }, // Bleeds off left screen edge
+    { id: "mid-far-right-edge", top: "42%", left: "98%", zone: "mid" }, // Bleeds off right screen edge
+  ],
+};
+
+const MAX_SLOTS = BG_CONFIG.maxImages;
+
+// ----------------------------------------------------------------------
+// 🖼️ TOP-LEVEL VITE BACKGROUND IMAGE LOADER
+// ----------------------------------------------------------------------
+const bgModules = import.meta.glob("../assets/backgrounds/*", {
+  eager: true,
+});
+
+const BACKGROUND_IMAGES = Object.values(bgModules).map(
+  (mod) => mod.default || mod,
+);
+
 const CORNERS = {
   artist: { x: "50%", y: "15%" },
   journalist: { x: "15%", y: "80%" },
@@ -75,6 +159,7 @@ const CurvedLink = ({ link, topic, active, isMobile, navigate }) => {
         transform: `scale(${scale})`,
         transformOrigin: "250px 250px",
         cursor: "pointer",
+        filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.25))",
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -122,11 +207,119 @@ export default function Portfolio() {
   const [isTriangleHovered, setIsTriangleHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+  // Persistent 3D Slots Array for Smooth Interpolation
+  const [slots, setSlots] = useState(() =>
+    Array.from({ length: MAX_SLOTS }, (_, index) => ({
+      id: index,
+      src: "",
+      top: "50%",
+      left: "50%",
+      width: "200px",
+      scale: 0.3,
+      blur: "10px",
+      depth: BG_CONFIG.depths[2],
+      active: false,
+    })),
+  );
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // ----------------------------------------------------------------------
+  // 🎲 SMOOTH 3D SPATIAL INTERPOLATION ENGINE (TOP & BOTTOM BALANCED)
+  // ----------------------------------------------------------------------
+  useEffect(() => {
+    if (!BACKGROUND_IMAGES.length) return;
+
+    let count = Math.min(
+      BACKGROUND_IMAGES.length,
+      Math.floor(
+        Math.random() * (BG_CONFIG.maxImages - BG_CONFIG.minImages + 1),
+      ) + BG_CONFIG.minImages,
+    );
+
+    if (!isMobile && !activeCluster && count === 4) {
+      count = Math.random() < 0.5 ? 3 : 5;
+      if (count > BACKGROUND_IMAGES.length) {
+        count = BACKGROUND_IMAGES.length >= 3 ? 3 : BACKGROUND_IMAGES.length;
+      }
+    }
+
+    const shuffledImages = [...BACKGROUND_IMAGES].sort(
+      () => 0.5 - Math.random(),
+    );
+    const selectedImages = shuffledImages.slice(0, count);
+
+    // GUARANTEED VERTICAL DISTRIBUTION LOGIC
+    const topPool = BG_CONFIG.positions.filter((p) => p.zone === "top");
+    const bottomPool = BG_CONFIG.positions.filter((p) => p.zone === "bottom");
+
+    // Force 1 random Top position and 1 random Bottom position
+    const selectedTop = topPool[Math.floor(Math.random() * topPool.length)];
+    const selectedBottom =
+      bottomPool[Math.floor(Math.random() * bottomPool.length)];
+
+    // Fill the remaining needed positions from the rest of the pool
+    const remainingPool = BG_CONFIG.positions
+      .filter((p) => p !== selectedTop && p !== selectedBottom)
+      .sort(() => 0.5 - Math.random());
+
+    const balancedPositions = [
+      selectedTop,
+      selectedBottom,
+      ...remainingPool.slice(0, count - 2),
+    ].sort(() => 0.5 - Math.random());
+
+    setSlots((prevSlots) =>
+      prevSlots.map((slot, index) => {
+        const isActive = index < count;
+
+        if (!isActive) {
+          return {
+            ...slot,
+            active: false,
+            scale: 0.3,
+            blur: "8px",
+          };
+        }
+
+        const pos = balancedPositions[index % balancedPositions.length];
+        const depth =
+          index === 0
+            ? BG_CONFIG.depths[0]
+            : BG_CONFIG.depths[
+                Math.floor(Math.random() * BG_CONFIG.depths.length)
+              ];
+
+        const minW = isMobile
+          ? BG_CONFIG.mobileWidthMin
+          : BG_CONFIG.desktopWidthMin;
+        const maxW = isMobile
+          ? BG_CONFIG.mobileWidthMax
+          : BG_CONFIG.desktopWidthMax;
+        const widthPx = Math.floor(Math.random() * (maxW - minW + 1)) + minW;
+
+        return {
+          id: slot.id,
+          active: true,
+          src: selectedImages[index],
+          top: pos.top,
+          left: pos.left,
+          width: `${widthPx}px`,
+          scale: depth.scale,
+          blur: depth.blur,
+          depth: depth,
+        };
+      }),
+    );
+  }, [activeCluster, isMobile]);
+
+  // Determine current zoom state
+  const isZoomedIn = activeCluster !== null && activeCluster !== "all";
+  const stateKey = isZoomedIn ? "zoomedIn" : "zoomedOut";
 
   // ----------------------------------------------------------------------
   // ⚙️ EASY LAYOUT CONFIGURATION
@@ -370,7 +563,9 @@ export default function Portfolio() {
       width: "250%",
       height: "250%",
       background: `radial-gradient(circle closest-side, var(--${topic}) 12%, transparent 75%)`,
-      transform: `translate(-50%, -50%) scale(${isSingleActive ? 1.1 : isAllActive ? 0.68 : 0.1})`,
+      transform: `translate(-50%, -50%) scale(${
+        isSingleActive ? 1.1 : isAllActive ? 0.68 : 0.1
+      })`,
       opacity: isSingleActive ? 0.9 : isAllActive ? 0.72 : 0,
       transition:
         "transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s ease-in-out",
@@ -431,6 +626,58 @@ export default function Portfolio() {
         backgroundColor: "var(--background)",
       }}
     >
+      {/* 🖼️ FLUID 3D INTERPOLATED BACKGROUND LAYER (Entire layer stays at zIndex: 0) */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      >
+        {slots.map((slot) => {
+          const currentOpacity = slot.active ? slot.depth.opacity[stateKey] : 0;
+          const currentSaturate = slot.depth.saturate[stateKey];
+          const slotZIndex = slot.active ? slot.depth.zIndex : 0;
+
+          return (
+            <div
+              key={slot.id}
+              style={{
+                position: "absolute",
+                top: slot.top,
+                left: slot.left,
+                width: slot.width,
+                opacity: currentOpacity,
+                filter: `blur(${slot.blur}) saturate(${currentSaturate})`,
+                transform: `translate(-50%, -50%) scale(${slot.scale})`,
+                borderRadius: BG_CONFIG.borderRadius,
+                boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+                zIndex: slotZIndex, // Near images render in front of mid/far images
+                transition:
+                  "top 1.6s cubic-bezier(0.16, 1, 0.3, 1), left 1.6s cubic-bezier(0.16, 1, 0.3, 1), transform 1.6s cubic-bezier(0.16, 1, 0.3, 1), filter 1.6s ease-in-out, opacity 1.2s ease-in-out, width 1.6s cubic-bezier(0.16, 1, 0.3, 1)",
+                overflow: "hidden",
+              }}
+            >
+              {slot.src && (
+                <img
+                  src={slot.src}
+                  alt=""
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "block",
+                    objectFit: "cover",
+                    borderRadius: BG_CONFIG.borderRadius,
+                    transition: "opacity 0.8s ease-in-out",
+                  }}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
       <div
         style={{
           position: "absolute",
@@ -440,6 +687,7 @@ export default function Portfolio() {
           width: CONTAINER_SIZE,
           aspectRatio: "1 / 1",
           transition: "transform 0.8s cubic-bezier(0.25, 1, 0.5, 1)",
+          zIndex: 2,
         }}
       >
         {/* INTERACTIVE GRADIENT TRIANGLE */}
@@ -465,8 +713,7 @@ export default function Portfolio() {
             style={{
               position: "absolute",
               inset: 0,
-              background: `radial-gradient(circle at ${CORNERS.artist.x} ${CORNERS.artist.y}, var(--artist) 0%, transparent 60%), radial-gradient(circle at ${CORNERS.journalist.x} ${CORNERS.journalist.y}, var(--journalist) 0%, transparent 60%), radial-gradient(circle at ${CORNERS.educator.x} ${CORNERS.educator.y}, var(--educator) 0%, transparent 60%)`,
-              backgroundColor: "var(--background)",
+              background: `radial-gradient(circle at ${CORNERS.artist.x} ${CORNERS.artist.y}, var(--artist) 0%, transparent 70%), radial-gradient(circle at ${CORNERS.journalist.x} ${CORNERS.journalist.y}, var(--journalist) 0%, transparent 70%), radial-gradient(circle at ${CORNERS.educator.x} ${CORNERS.educator.y}, var(--educator) 0%, transparent 70%)`,
             }}
           />
 
@@ -485,7 +732,6 @@ export default function Portfolio() {
           const baseLeft = parseFloat(currentTopics[topic].left);
           const baseTop = parseFloat(currentTopics[topic].top);
 
-          // Translates the inactive topics in harmony with the triangle
           const currentShiftX = !isTopicActive && activeCluster ? shiftX : 0;
           const currentShiftY = !isTopicActive && activeCluster ? shiftY : 0;
 
@@ -503,7 +749,7 @@ export default function Portfolio() {
                   "left 0.4s cubic-bezier(0.25, 1, 0.5, 1), top 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
               }}
             >
-              {/* MAIN TOPIC HEADING / ICON */}
+              {/* MAIN TOPIC HEADING */}
               <div
                 style={{
                   position: "relative",
