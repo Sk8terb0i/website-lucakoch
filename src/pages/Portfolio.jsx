@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, Fragment } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { translations } from "../translations";
 
@@ -11,7 +11,6 @@ const CORNERS = {
   educator: { x: "85%", y: "80%" },
 };
 
-// Anchors
 const DESKTOP_TOPICS = {
   artist: { left: "50%", top: "-5%" },
   journalist: { left: "-5%", top: "95%" },
@@ -24,9 +23,101 @@ const MOBILE_TOPICS = {
   educator: { left: "88%", top: "105%" },
 };
 
+// Generous Character width algorithm to guarantee perfect marker highlights
+const getApproxWidth = (str, isMobile) => {
+  const size = isMobile ? 11.5 : 13.5;
+  let width = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (/[A-Z]/.test(char)) width += 0.72;
+    else if (/[wmy]/i.test(char)) width += 0.75;
+    else if (/[iljftr1 \.,']/i.test(char)) width += 0.32;
+    else width += 0.54;
+  }
+  return width * size;
+};
+
+// SVG Component to render curved text with a FLAWLESS crisp marker stroke
+const CurvedLink = ({ link, topic, active, isMobile, navigate }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    if (link.isExternal) {
+      window.open(link.url, "_blank");
+    } else {
+      navigate(link.path);
+    }
+  };
+
+  const pathId = `curve-${link.ring}-${topic}-${link.r}`;
+  const scale = active ? 1 : 0.6;
+  const opacity = active ? 1 : 0;
+
+  // Exact Arc Calculation for the Marker Background on a FULL CIRCLE
+  const C = 2 * Math.PI * link.r;
+  const titleText = link.title + (link.isExternal ? "  " : "");
+  const calcWidth = getApproxWidth(titleText, isMobile);
+  const padding = isMobile ? 22 : 28;
+  const textLen = calcWidth + padding;
+
+  const offsetRatio = parseInt(link.offset, 10) / 100;
+  const centerPx = offsetRatio * C;
+  const startPx = Math.max(0, centerPx - textLen / 2);
+
+  return (
+    <g
+      style={{
+        opacity: opacity,
+        pointerEvents: active ? "auto" : "none",
+        transition:
+          "opacity 0.4s ease, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
+        transform: `scale(${scale})`,
+        transformOrigin: "250px 250px",
+        cursor: "pointer",
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
+    >
+      {/* PERFECT CRISP MARKER BACKGROUND */}
+      <use
+        href={`#${pathId}`}
+        stroke={`var(--${topic})`}
+        strokeWidth={isMobile ? "18" : "22"}
+        strokeOpacity={isHovered ? 0.38 : 0.22}
+        strokeLinecap="butt"
+        strokeDasharray={`0 ${startPx} ${textLen} ${C * 2}`}
+        fill="none"
+        style={{ transition: "stroke-opacity 0.2s ease" }}
+      />
+
+      {/* FOREGROUND TEXT */}
+      <text
+        textAnchor="middle"
+        dominantBaseline="central"
+        style={{
+          fontFamily: "'Satoshi', sans-serif",
+          fontSize: isMobile ? "11.5px" : "13.5px",
+          fontWeight: link.isExternal ? "400" : "500",
+          fontStyle: link.isExternal ? "italic" : "normal",
+          fill: isHovered ? `var(--${topic})` : "var(--text)",
+          transition: "fill 0.2s ease",
+        }}
+      >
+        <textPath href={`#${pathId}`} startOffset={link.offset}>
+          {link.title}
+          {link.isExternal ? " ↗" : ""}
+        </textPath>
+      </text>
+    </g>
+  );
+};
+
 export default function Portfolio() {
   const { lang } = useLanguage();
   const t = translations[lang];
+  const navigate = useNavigate();
   const [activeCluster, setActiveCluster] = useState(null);
   const [isTriangleHovered, setIsTriangleHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -37,44 +128,202 @@ export default function Portfolio() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Desktop Mouse Zone Hover Detection
+  // ----------------------------------------------------------------------
+  // ⚙️ EASY LAYOUT CONFIGURATION
+  // ----------------------------------------------------------------------
+
+  const getRadiuses = (topic) => {
+    if (topic === "artist") return isMobile ? [55, 110] : [75, 135];
+    if (topic === "journalist") return isMobile ? [65, 100] : [98, 155];
+    if (topic === "educator") return isMobile ? [60, 95] : [115, 165];
+    return [85, 130];
+  };
+
+  const clusterData = {
+    artist: [
+      {
+        title: "SenSing",
+        path: "/art/sensing",
+        level: 1,
+        ring: "top",
+        offset: "53%",
+      },
+      {
+        title: "Pistache",
+        path: "/art/pistache",
+        level: 1,
+        ring: "bottom",
+        offset: "28%",
+      },
+      {
+        title: "High D",
+        path: "/art/high-d",
+        level: 1,
+        ring: "bottom",
+        offset: "58%",
+      },
+      {
+        title: "Brassmaster Flash",
+        path: "/art/brassmaster-flash",
+        level: 2,
+        ring: "top",
+        offset: "40%",
+      },
+      {
+        title: "Worldbuzzpoems",
+        path: "/art/worldbuzzpoems",
+        level: 2,
+        ring: "bottom",
+        offset: "65%",
+      },
+    ],
+    journalist: [
+      {
+        title: "Audio",
+        path: "/journalism/audio",
+        level: 1,
+        ring: "bottom",
+        offset: "47%",
+      },
+      {
+        title: t.articles,
+        path: "/journalism/artikel",
+        level: 1,
+        ring: "top",
+        offset: "41%",
+      },
+      {
+        title: "TV",
+        path: "/journalism/tv",
+        level: 2,
+        ring: "bottom",
+        offset: "55%",
+      },
+    ],
+    educator: [
+      {
+        title: "WIAM",
+        path: "/education/wiam",
+        level: 1,
+        ring: "top",
+        offset: "40%",
+      },
+      {
+        title: "Gesangsküche",
+        path: "/education/gesangskueche",
+        level: 1,
+        ring: "bottom",
+        offset: "36%",
+      },
+      {
+        title: t.choirProjects,
+        path: "/education/chorprojekte",
+        level: 1,
+        ring: "bottom",
+        offset: "72%",
+      },
+      {
+        title: "Atelier Sinnesküche",
+        path: "/education/atelier-sinneskueche",
+        level: 2,
+        ring: "top",
+        offset: "57%",
+      },
+      {
+        title: "Jugendjazzorchester.ch",
+        url: "https://jugendjazzorchester.ch",
+        isExternal: true,
+        level: 2,
+        ring: "bottom",
+        offset: "29%",
+      },
+      {
+        title: t.moodsCouncil,
+        url: "https://www.moods.ch/das-moods/ueber-uns/team/musiker-innenrat",
+        isExternal: true,
+        level: 2,
+        ring: "bottom",
+        offset: "65%",
+      },
+    ],
+  };
+
+  const currentTopics = isMobile ? MOBILE_TOPICS : DESKTOP_TOPICS;
+
+  // ----------------------------------------------------------------------
+  // MATHEMATICAL ZOOM, PAN, & HOVER ENGINE
+  // ----------------------------------------------------------------------
+
   useEffect(() => {
     if (isMobile || activeCluster === "all") return;
 
     const handleMouseMove = (e) => {
       const cx = window.innerWidth / 2;
       const cy = window.innerHeight / 2;
-      const dx = e.clientX - cx;
-      const dy = e.clientY - cy;
-      const dist = Math.hypot(dx, dy);
-      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      const vmin = Math.min(window.innerWidth, window.innerHeight);
+      const containerPx = Math.max(220, Math.min(vmin * 0.45, 600));
 
-      const minRadius = window.innerHeight * 0.15;
-      const maxRadius = window.innerHeight * 0.42;
+      if (activeCluster !== null) {
+        const S = 1.5;
+        const outerR = getRadiuses(activeCluster)[1];
+        const outerRadiusPhysical = outerR * S;
 
-      if (dist < minRadius || dist > maxRadius) {
-        if (activeCluster !== null && activeCluster !== "all") {
+        const cornerPctX = parseFloat(CORNERS[activeCluster].x);
+        const cornerPctY = parseFloat(CORNERS[activeCluster].y);
+        const topicPctX = parseFloat(currentTopics[activeCluster].left);
+        const topicPctY = parseFloat(currentTopics[activeCluster].top);
+
+        const svgOffsetX_pct = topicPctX - cornerPctX;
+        const svgOffsetY_pct = topicPctY - cornerPctY;
+        const svgScreenX = cx + (svgOffsetX_pct / 100) * (containerPx * S);
+        const svgScreenY = cy + (svgOffsetY_pct / 100) * (containerPx * S);
+
+        const distFromSvg = Math.hypot(
+          e.clientX - svgScreenX,
+          e.clientY - svgScreenY,
+        );
+
+        if (distFromSvg > outerRadiusPhysical + 40) {
           setActiveCluster(null);
         }
         return;
       }
 
-      let newZone = null;
-      if (angle > -150 && angle <= -30) newZone = "artist";
-      else if (angle > -30 && angle <= 90) newZone = "educator";
-      else newZone = "journalist";
+      const getTopicCoord = (topicKey) => {
+        const pctX = parseFloat(currentTopics[topicKey].left);
+        const pctY = parseFloat(currentTopics[topicKey].top);
+        return {
+          x: cx + ((pctX - 50) / 100) * containerPx,
+          y: cy + ((pctY - 50) / 100) * containerPx,
+        };
+      };
 
-      if (newZone !== activeCluster) setActiveCluster(newZone);
+      const dArtist = Math.hypot(
+        e.clientX - getTopicCoord("artist").x,
+        e.clientY - getTopicCoord("artist").y,
+      );
+      const dJourn = Math.hypot(
+        e.clientX - getTopicCoord("journalist").x,
+        e.clientY - getTopicCoord("journalist").y,
+      );
+      const dEdu = Math.hypot(
+        e.clientX - getTopicCoord("educator").x,
+        e.clientY - getTopicCoord("educator").y,
+      );
+
+      const TRIGGER_DIST = containerPx * 0.3;
+
+      if (dArtist < TRIGGER_DIST) setActiveCluster("artist");
+      else if (dJourn < TRIGGER_DIST) setActiveCluster("journalist");
+      else if (dEdu < TRIGGER_DIST) setActiveCluster("educator");
     };
 
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [activeCluster, isMobile]);
+  }, [activeCluster, isMobile, currentTopics]);
 
   useEffect(() => {
-    if (window.updateFavicon) {
-      window.updateFavicon(activeCluster || "all");
-    }
+    if (window.updateFavicon) window.updateFavicon(activeCluster || "all");
   }, [activeCluster]);
 
   const handleTriangleClick = (e) => {
@@ -84,10 +333,19 @@ export default function Portfolio() {
 
   const handleTopicClick = (topic, e) => {
     e.stopPropagation();
-    setActiveCluster((prev) => (prev === topic ? null : topic));
+    if (activeCluster === topic) {
+      navigate(
+        topic === "artist"
+          ? "/art"
+          : topic === "educator"
+            ? "/education"
+            : "/journalism",
+      );
+    } else {
+      setActiveCluster(topic);
+    }
   };
 
-  const currentTopics = isMobile ? MOBILE_TOPICS : DESKTOP_TOPICS;
   const isVisible = (topic) =>
     activeCluster === "all" || activeCluster === topic;
 
@@ -96,13 +354,11 @@ export default function Portfolio() {
       !activeCluster ||
       activeCluster === "all" ||
       activeCluster === clusterName
-    ) {
+    )
       return "none";
-    }
     return "blur(2px) opacity(0.5)";
   };
 
-  // RECALIBRATED EXPANSION WAVE LOGIC
   const getWaveStyle = (topic) => {
     const isSingleActive = activeCluster === topic;
     const isAllActive = activeCluster === "all";
@@ -114,10 +370,7 @@ export default function Portfolio() {
       width: "250%",
       height: "250%",
       background: `radial-gradient(circle closest-side, var(--${topic}) 12%, transparent 75%)`,
-      /* Scale 1.1 for single topic focus, 0.68 when ALL active to meet vividly in the middle */
-      transform: `translate(-50%, -50%) scale(${
-        isSingleActive ? 1.1 : isAllActive ? 0.68 : 0.1
-      })`,
+      transform: `translate(-50%, -50%) scale(${isSingleActive ? 1.1 : isAllActive ? 0.68 : 0.1})`,
       opacity: isSingleActive ? 0.9 : isAllActive ? 0.72 : 0,
       transition:
         "transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s ease-in-out",
@@ -126,100 +379,46 @@ export default function Portfolio() {
     };
   };
 
-  const clusterData = {
-    artist: [
-      {
-        title: "SenSing",
-        path: "/art/sensing",
-        x: isMobile ? 0 : 0,
-        y: isMobile ? -38 : -55,
-      },
-      {
-        title: "Pistache",
-        path: "/art/pistache",
-        x: isMobile ? -75 : -120,
-        y: isMobile ? -20 : -30,
-      },
-      {
-        title: "Brassmaster Flash",
-        path: "/art/brassmaster-flash",
-        x: isMobile ? 75 : 120,
-        y: isMobile ? -20 : -30,
-      },
-      {
-        title: "High D",
-        path: "/art/high-d",
-        x: isMobile ? -85 : -140,
-        y: isMobile ? 5 : 15,
-      },
-      {
-        title: "Worldbuzzpoems",
-        path: "/art/worldbuzzpoems",
-        x: isMobile ? 85 : 140,
-        y: isMobile ? 5 : 15,
-      },
-    ],
-    journalist: [
-      {
-        title: "Audio",
-        path: "/journalism/audio",
-        x: isMobile ? -25 : -110,
-        y: isMobile ? 28 : -40,
-      },
-      {
-        title: t.articles,
-        path: "/journalism/artikel",
-        x: isMobile ? 35 : 90,
-        y: isMobile ? 28 : -40,
-      },
-      {
-        title: "TV",
-        path: "/journalism/tv",
-        x: isMobile ? 5 : 0,
-        y: isMobile ? 52 : 45,
-      },
-    ],
-    educator: [
-      {
-        title: "Atelier Sinnesküche",
-        path: "/education/atelier-sinneskueche",
-        x: isMobile ? -45 : -120,
-        y: isMobile ? 28 : -45,
-      },
-      {
-        title: "WIAM",
-        path: "/education/wiam",
-        x: isMobile ? 45 : 100,
-        y: isMobile ? 28 : -45,
-      },
-      {
-        title: "Gesangsküche",
-        path: "/education/gesangskueche",
-        x: isMobile ? -45 : -130,
-        y: isMobile ? 52 : 40,
-      },
-      {
-        title: t.choirProjects,
-        path: "/education/chorprojekte",
-        x: isMobile ? 45 : 110,
-        y: isMobile ? 52 : 40,
-      },
-      {
-        title: "Jugendjazzorchester.ch",
-        url: "https://jugendjazzorchester.ch",
-        isExternal: true,
-        x: isMobile ? 0 : -80,
-        y: isMobile ? 76 : 85,
-      },
-      {
-        title: t.moodsCouncil,
-        url: "https://www.moods.ch/das-moods/ueber-uns/team/musiker-innenrat",
-        isExternal: true,
-        x: isMobile ? 0 : -10,
-        y: isMobile ? 102 : 118,
-      },
-    ],
+  const getContainerTransform = () => {
+    if (!activeCluster || activeCluster === "all") {
+      return "translate(-50%, -50%) scale(1)";
+    }
+
+    const S = isMobile ? 1.25 : 1.5;
+    let cx = parseFloat(CORNERS[activeCluster].x);
+    let cy = parseFloat(CORNERS[activeCluster].y);
+
+    if (isMobile) {
+      cx = parseFloat(MOBILE_TOPICS[activeCluster].left);
+      cy = parseFloat(MOBILE_TOPICS[activeCluster].top);
+    }
+
+    const tx = (50 - cx) * S;
+    const ty = (50 - cy) * S;
+
+    return `translate(calc(-50% + ${tx}%), calc(-50% + ${ty}%)) scale(${S})`;
   };
+
+  // --- MOBILE SHIFT ENGINE ---
+  let shiftX = 0;
+  let shiftY = 0;
+
+  if (isMobile && activeCluster) {
+    if (activeCluster === "artist") {
+      shiftX = 0;
+      shiftY = 15;
+    } else if (activeCluster === "journalist") {
+      shiftX = 22;
+      shiftY = 10;
+    } else if (activeCluster === "educator") {
+      shiftX = -22;
+      shiftY = -2;
+    }
+  }
+
+  const triangleTransform = isTriangleHovered
+    ? `translate(${shiftX}%, ${shiftY}%) scale(1.03)`
+    : `translate(${shiftX}%, ${shiftY}%) scale(1)`;
 
   return (
     <div
@@ -237,9 +436,10 @@ export default function Portfolio() {
           position: "absolute",
           top: "48%",
           left: "50%",
-          transform: "translate(-50%, -50%)",
+          transform: getContainerTransform(),
           width: CONTAINER_SIZE,
           aspectRatio: "1 / 1",
+          transition: "transform 0.8s cubic-bezier(0.25, 1, 0.5, 1)",
         }}
       >
         {/* INTERACTIVE GRADIENT TRIANGLE */}
@@ -253,7 +453,7 @@ export default function Portfolio() {
             zIndex: 5,
             cursor: "pointer",
             clipPath: `polygon(${CORNERS.artist.x} ${CORNERS.artist.y}, ${CORNERS.journalist.x} ${CORNERS.journalist.y}, ${CORNERS.educator.x} ${CORNERS.educator.y})`,
-            transform: isTriangleHovered ? "scale(1.03)" : "scale(1)",
+            transform: triangleTransform,
             filter: isTriangleHovered
               ? "brightness(1.08) drop-shadow(0 0 15px rgba(0,0,0,0.12))"
               : "none",
@@ -275,31 +475,42 @@ export default function Portfolio() {
           <div style={getWaveStyle("educator")} />
         </div>
 
-        {/* TOPICS & WORD CLUSTER LINKS */}
+        {/* TOPICS & SVG CIRCULAR WORD CLUSTERS */}
         {["artist", "journalist", "educator"].map((topic) => {
           const active = isVisible(topic);
+          const isTopicActive = activeCluster === topic;
           const links = clusterData[topic];
+          const [R1, R2] = getRadiuses(topic);
+
+          const baseLeft = parseFloat(currentTopics[topic].left);
+          const baseTop = parseFloat(currentTopics[topic].top);
+
+          // Translates the inactive topics in harmony with the triangle
+          const currentShiftX = !isTopicActive && activeCluster ? shiftX : 0;
+          const currentShiftY = !isTopicActive && activeCluster ? shiftY : 0;
 
           return (
             <div
               key={topic}
               style={{
                 position: "absolute",
-                left: currentTopics[topic].left,
-                top: currentTopics[topic].top,
+                left: `${baseLeft + currentShiftX}%`,
+                top: `${baseTop + currentShiftY}%`,
                 transform: "translate(-50%, -50%)",
                 zIndex: 10,
                 filter: getBlurStyle(topic),
-                transition: "filter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
+                transition:
+                  "left 0.4s cubic-bezier(0.25, 1, 0.5, 1), top 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)",
               }}
             >
-              {/* MAIN TOPIC HEADING + ABSOLUTE NAV ARROW */}
+              {/* MAIN TOPIC HEADING / ICON */}
               <div
                 style={{
                   position: "relative",
                   display: "inline-flex",
                   justifyContent: "center",
                   alignItems: "center",
+                  zIndex: 2,
                 }}
               >
                 <h2
@@ -314,6 +525,9 @@ export default function Portfolio() {
                     userSelect: "none",
                     whiteSpace: "nowrap",
                     transition: "transform 0.3s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                   onMouseOver={(e) =>
                     (e.currentTarget.style.transform = "scale(1.04)")
@@ -322,113 +536,95 @@ export default function Portfolio() {
                     (e.currentTarget.style.transform = "scale(1)")
                   }
                 >
-                  {t[topic]}
+                  {isTopicActive ? (
+                    <svg
+                      width="1.2em"
+                      height="1.2em"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={`var(--${topic})`}
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ transition: "all 0.3s ease" }}
+                    >
+                      <circle cx="12" cy="12" r="10" opacity="0.4"></circle>
+                      <polyline points="12 16 16 12 12 8"></polyline>
+                      <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                  ) : (
+                    t[topic]
+                  )}
                 </h2>
-
-                <Link
-                  to={
-                    topic === "artist"
-                      ? "/art"
-                      : topic === "educator"
-                        ? "/education"
-                        : "/journalism"
-                  }
-                  onClick={(e) => e.stopPropagation()}
-                  title={`Go to ${t[topic]} page`}
-                  style={{
-                    position: "absolute",
-                    left: "calc(100% + 4px)",
-                    top: "50%",
-                    textDecoration: "none",
-                    color: `var(--${topic})`,
-                    fontFamily: "BrandFont, sans-serif",
-                    fontSize: isMobile ? "1.1rem" : "1.6rem",
-                    lineHeight: 1,
-                    opacity: active ? 1 : 0,
-                    pointerEvents: active ? "auto" : "none",
-                    transform: active
-                      ? "translateY(-50%) translateX(0)"
-                      : "translateY(-50%) translateX(-6px)",
-                    transition: "all 0.35s cubic-bezier(0.25, 1, 0.5, 1)",
-                    whiteSpace: "nowrap",
-                  }}
-                  onMouseOver={(e) =>
-                    (e.currentTarget.style.transform =
-                      "translateY(-50%) translateX(4px)")
-                  }
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.transform =
-                      "translateY(-50%) translateX(0)")
-                  }
-                >
-                  →
-                </Link>
               </div>
 
-              {/* FLOATING WORD CLUSTER WITH MARKER HIGHLIGHT */}
-              {links.map((link) => {
-                const linkStyle = {
+              {/* CURVED TEXT SVG LAYER */}
+              <svg
+                width={500}
+                height={500}
+                viewBox="0 0 500 500"
+                style={{
                   position: "absolute",
-                  left: "50%",
                   top: "50%",
-                  transform: active
-                    ? `translate(calc(-50% + ${link.x}px), calc(-50% + ${link.y}px)) scale(1)`
-                    : "translate(-50%, -50%) scale(0.6)",
-                  opacity: active ? 1 : 0,
-                  pointerEvents: active ? "auto" : "none",
-                  transition: "all 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
-                  whiteSpace: "nowrap",
-                  textDecoration: link.isExternal
-                    ? "underline dashed rgba(20,28,9,0.3)"
-                    : "none",
-                  fontFamily: "'Satoshi', sans-serif",
-                  fontSize: isMobile ? "0.72rem" : "0.88rem",
-                  fontWeight: link.isExternal ? "400" : "500",
-                  fontStyle: link.isExternal ? "italic" : "normal",
-                  color: "var(--text)",
-                  backgroundColor: `color-mix(in srgb, var(--${topic}) 22%, transparent)`,
-                  borderRadius: "2px 4px 2px 3px",
-                  padding: "0.12rem 0.45rem",
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
-                };
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  pointerEvents: "none",
+                  zIndex: 1,
+                  overflow: "visible",
+                }}
+              >
+                {/* DELICATE THIN DOTTED ORBIT RINGS */}
+                <circle
+                  cx="250"
+                  cy="250"
+                  r={R1}
+                  stroke="var(--text)"
+                  strokeWidth="0.8"
+                  strokeDasharray="2 5"
+                  fill="none"
+                  opacity={active ? 0.12 : 0}
+                  style={{ transition: "opacity 0.6s ease" }}
+                />
+                <circle
+                  cx="250"
+                  cy="250"
+                  r={R2}
+                  stroke="var(--text)"
+                  strokeWidth="0.8"
+                  strokeDasharray="2 5"
+                  fill="none"
+                  opacity={active ? 0.12 : 0}
+                  style={{ transition: "opacity 0.6s ease" }}
+                />
 
-                return link.isExternal ? (
-                  <a
+                <defs>
+                  {[R1, R2].map((r) => (
+                    <Fragment key={r}>
+                      {/* Top Hemisphere Full Circle (Clockwise) */}
+                      <path
+                        id={`curve-top-${topic}-${r}`}
+                        d={`M 250,${250 + r} A ${r},${r} 0 0,1 250,${250 - r} A ${r},${r} 0 0,1 250,${250 + r}`}
+                      />
+                      {/* Bottom Hemisphere Full Circle (Counter-Clockwise) */}
+                      <path
+                        id={`curve-bottom-${topic}-${r}`}
+                        d={`M 250,${250 - r} A ${r},${r} 0 0,0 250,${250 + r} A ${r},${r} 0 0,0 250,${250 - r}`}
+                      />
+                    </Fragment>
+                  ))}
+                </defs>
+
+                {links.map((link) => (
+                  <CurvedLink
                     key={link.title}
-                    href={link.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    style={linkStyle}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor = `color-mix(in srgb, var(--${topic}) 38%, transparent)`;
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.backgroundColor = `color-mix(in srgb, var(--${topic}) 22%, transparent)`;
-                    }}
-                  >
-                    {link.title}{" "}
-                    <span style={{ fontSize: "0.75em", opacity: 0.7 }}>↗</span>
-                  </a>
-                ) : (
-                  <Link
-                    key={link.title}
-                    to={link.path}
-                    onClick={(e) => e.stopPropagation()}
-                    style={linkStyle}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor = `color-mix(in srgb, var(--${topic}) 38%, transparent)`;
-                      e.currentTarget.style.color = `var(--${topic})`;
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.backgroundColor = `color-mix(in srgb, var(--${topic}) 22%, transparent)`;
-                      e.currentTarget.style.color = "var(--text)";
-                    }}
-                  >
-                    {link.title}
-                  </Link>
-                );
-              })}
+                    link={{ ...link, r: link.level === 1 ? R1 : R2 }}
+                    topic={topic}
+                    active={active}
+                    isMobile={isMobile}
+                    navigate={navigate}
+                  />
+                ))}
+              </svg>
             </div>
           );
         })}
