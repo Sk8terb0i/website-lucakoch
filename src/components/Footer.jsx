@@ -5,17 +5,23 @@ export default function Footer() {
   const { lang } = useLanguage();
   const t = translations[lang];
 
-  const linkStyle = {
-    fontSize: "0.8rem", // Slightly smaller for Satoshi
+  const getMarkerStyle = (rotation) => ({
+    fontSize: "0.8rem",
     color: "var(--text)",
     textTransform: "lowercase",
-    fontFamily: "'Satoshi', sans-serif", // Switched to Satoshi
-    letterSpacing: "0.08em", // Satoshi loves a bit of extra tracking
-    transition: "opacity 0.2s ease",
+    fontFamily: "'Satoshi', sans-serif",
+    letterSpacing: "0.08em",
+    transition: "opacity 0.2s ease, transform 0.2s ease",
     pointerEvents: "auto",
     cursor: "pointer",
     fontWeight: "normal",
-  };
+    /* IMPERFECT ORGANIC MARKER HIGHLIGHT */
+    backgroundColor: "var(--background)",
+    padding: "0.15em 0.55em 0.2em 0.45em",
+    borderRadius: "255px 15px 225px 15px / 15px 225px 15px 255px",
+    display: "inline-block",
+    transform: `rotate(${rotation})`,
+  });
 
   return (
     <footer
@@ -26,7 +32,7 @@ export default function Footer() {
         right: 0,
         zIndex: 50,
         pointerEvents: "none",
-        opacity: 0.75, // Matching your header opacity
+        opacity: 0.75,
       }}
     >
       {/* THE THIN DELINEATION LINE */}
@@ -52,7 +58,7 @@ export default function Footer() {
           href="https://instagram.com"
           target="_blank"
           rel="noreferrer"
-          style={linkStyle}
+          style={getMarkerStyle("0.5deg")}
           onMouseOver={(e) => (e.target.style.opacity = 0.5)}
           onMouseOut={(e) => (e.target.style.opacity = 1)}
         >
@@ -63,7 +69,7 @@ export default function Footer() {
           href="https://tiktok.com"
           target="_blank"
           rel="noreferrer"
-          style={linkStyle}
+          style={getMarkerStyle("-0.4deg")}
           onMouseOver={(e) => (e.target.style.opacity = 0.5)}
           onMouseOut={(e) => (e.target.style.opacity = 1)}
         >
@@ -74,7 +80,7 @@ export default function Footer() {
           href="https://youtube.com"
           target="_blank"
           rel="noreferrer"
-          style={linkStyle}
+          style={getMarkerStyle("0.6deg")}
           onMouseOver={(e) => (e.target.style.opacity = 0.5)}
           onMouseOut={(e) => (e.target.style.opacity = 1)}
         >

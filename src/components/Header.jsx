@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { translations } from "../translations";
@@ -10,11 +10,56 @@ export default function Header() {
   const t = translations[lang];
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isLangOverlapped, setIsLangOverlapped] = useState(false);
+  const langSwitchRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // ----------------------------------------------------------------------
+  // 🔍 DYNAMIC OVERLAP DETECTOR FOR LANGUAGE SWITCH BORDER
+  // ----------------------------------------------------------------------
+  useEffect(() => {
+    const checkOverlap = () => {
+      if (!langSwitchRef.current) return;
+      const langRect = langSwitchRef.current.getBoundingClientRect();
+      const images = document.querySelectorAll("img");
+      let overlapping = false;
+
+      for (let img of images) {
+        const imgRect = img.getBoundingClientRect();
+
+        // Skip invisible or faded-out slots
+        const style = window.getComputedStyle(img.parentElement || img);
+        if (style.opacity === "0" || style.display === "none") continue;
+
+        const isIntersecting = !(
+          langRect.right < imgRect.left ||
+          langRect.left > imgRect.right ||
+          langRect.bottom < imgRect.top ||
+          langRect.top > imgRect.bottom
+        );
+
+        if (isIntersecting) {
+          overlapping = true;
+          break;
+        }
+      }
+      setIsLangOverlapped(overlapping);
+    };
+
+    const interval = setInterval(checkOverlap, 100);
+    window.addEventListener("resize", checkOverlap);
+    window.addEventListener("scroll", checkOverlap);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("resize", checkOverlap);
+      window.removeEventListener("scroll", checkOverlap);
+    };
   }, []);
 
   const menuItems = [
@@ -70,11 +115,17 @@ export default function Header() {
               style={{
                 margin: 0,
                 fontSize: "1rem",
-                fontWeight: "normal",
+                fontWeight: "500",
                 letterSpacing: "0.05em",
                 color: "var(--text)",
                 fontFamily: "BrandFont, sans-serif",
                 paddingTop: "4px",
+                /* IMPERFECT ORGANIC MARKER HIGHLIGHT */
+                backgroundColor: "var(--background)",
+                padding: "0.15em 0.6em 0.2em 0.5em",
+                borderRadius: "255px 15px 225px 15px / 15px 225px 15px 255px",
+                display: "inline-block",
+                transform: "rotate(-0.6deg)",
               }}
             >
               {t.siteTitle}
@@ -91,16 +142,20 @@ export default function Header() {
             pointerEvents: "auto",
           }}
         >
-          {/* LANGUAGE TOGGLE */}
+          {/* LANGUAGE TOGGLE WITH DYNAMIC OVERLAP BORDER */}
           <div
+            ref={langSwitchRef}
             style={{
               display: "flex",
               alignItems: "center",
               position: "relative",
-              border: "1px solid var(--text)",
+              border: `1px solid ${
+                isLangOverlapped ? "var(--background)" : "var(--text)"
+              }`,
               borderRadius: "30px",
               padding: "4px",
               backgroundColor: "var(--background)",
+              transition: "border-color 0.3s ease",
             }}
           >
             <div
@@ -161,7 +216,7 @@ export default function Header() {
               cursor: "pointer",
               display: "flex",
               flexDirection: "column",
-              gap: "8px",
+              gap: "7px",
               padding: "0",
               zIndex: 60,
               transition: "transform 0.3s ease, opacity 0.3s ease",
@@ -170,8 +225,10 @@ export default function Header() {
             <div
               style={{
                 width: "24px",
-                height: "1.5px",
+                height: "2.5px",
+                borderRadius: "2px",
                 backgroundColor: "var(--text)",
+                boxShadow: "0 0 0 2px var(--background)",
                 transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
                 transform: isMenuOpen
                   ? "translateY(4.75px) rotate(45deg)"
@@ -181,8 +238,10 @@ export default function Header() {
             <div
               style={{
                 width: "24px",
-                height: "1.5px",
+                height: "2.5px",
+                borderRadius: "2px",
                 backgroundColor: "var(--text)",
+                boxShadow: "0 0 0 2px var(--background)",
                 transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
                 transform: isMenuOpen
                   ? "translateY(-4.75px) rotate(-45deg)"
@@ -202,13 +261,15 @@ export default function Header() {
           bottom: 0,
           left: 0,
           right: isMobile ? 0 : DESKTOP_WIDTH,
-          backgroundColor: "rgba(0,0,0,0.15)",
-          backdropFilter: "blur(2px)",
-          WebkitBackdropFilter: "blur(2px)",
+          backgroundColor: isMobile
+            ? "rgba(255, 247, 252, 0.9)"
+            : "rgba(255, 247, 252, 0.15)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderRight: "1px solid rgba(223, 217, 232, 0.5)",
           zIndex: 54,
           pointerEvents: isMenuOpen ? "auto" : "none",
           visibility: isMenuOpen ? "visible" : "hidden",
-          /* On mobile: Fade smoothly in place. On desktop: Slide in from the left */
           opacity: isMobile ? (isMenuOpen ? 1 : 0) : 1,
           transform: isMobile
             ? "none"
@@ -231,8 +292,8 @@ export default function Header() {
           width: isMobile ? "100vw" : DESKTOP_WIDTH,
           boxSizing: "border-box",
           backgroundColor: isMobile
-            ? "rgba(255, 247, 252, 0.9)"
-            : "rgba(255, 247, 252, 0.15)",
+            ? "rgba(255, 247, 252, 0.98)"
+            : "rgba(255, 247, 252, 0.85)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
           borderLeft: "1px solid rgba(223, 217, 232, 0.5)",
@@ -241,7 +302,6 @@ export default function Header() {
           flexDirection: "column",
           padding: isMobile ? "8rem 2rem 3rem 2rem" : "8rem 4rem 3rem 4rem",
           overflowY: "auto",
-          /* Pure slide from the right side */
           transform: isMenuOpen ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)",
         }}
@@ -284,7 +344,6 @@ export default function Header() {
                   e.currentTarget.style.opacity = 1;
                 }}
               >
-                {/* The fixed-width Number Prefix */}
                 <span
                   style={{
                     fontFamily: "'Satoshi', sans-serif",
@@ -298,7 +357,6 @@ export default function Header() {
                   {String(index + 1).padStart(2, "0")}
                 </span>
 
-                {/* The actual Link Text */}
                 <span
                   style={{
                     fontSize: isCoreTopic
