@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom"; // Add useLocation
 import { useLanguage } from "../context/LanguageContext";
 import { translations } from "../translations";
 
@@ -12,7 +12,9 @@ export default function Header() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isZoomedIn, setIsZoomedIn] = useState(false);
 
-  // Handle Resize & Zoom State
+  const location = useLocation();
+  const isHome = location.pathname === "/";
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     const handleZoom = (e) => setIsZoomedIn(e.detail);
@@ -37,11 +39,11 @@ export default function Header() {
     "contact",
     "shop",
   ];
-
   const DESKTOP_WIDTH = "450px";
 
-  // Dynamic colors based on zoom state
-  const dynamicColor = isZoomedIn ? "var(--text)" : "var(--background)";
+  // ALWAYS dark text on sub-pages. Only white when on the Home page AND zoomed out.
+  const dynamicColor =
+    isHome && !isZoomedIn ? "var(--background)" : "var(--text)";
 
   return (
     <>
@@ -59,7 +61,6 @@ export default function Header() {
           pointerEvents: "none",
         }}
       >
-        {/* LEFT: SITE TITLE */}
         <div style={{ pointerEvents: "auto", flexShrink: 1, minWidth: 0 }}>
           <Link
             to="/"
@@ -83,7 +84,7 @@ export default function Header() {
                 margin: 0,
                 fontSize: isMobile ? "1.5rem" : "2rem",
                 fontWeight: "500",
-                letterSpacing: "0.05em",
+
                 color: dynamicColor,
                 fontFamily: "BrandFont, sans-serif",
                 display: "inline-block",
@@ -97,7 +98,6 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* RIGHT: LANGUAGE TOGGLE & HAMBURGER */}
         <div
           style={{
             display: "flex",
@@ -107,7 +107,6 @@ export default function Header() {
             flexShrink: 0,
           }}
         >
-          {/* SUBTLE LANGUAGE TOGGLE */}
           <div
             style={{
               display: "flex",
@@ -116,17 +115,16 @@ export default function Header() {
               gap: "12px",
             }}
           >
-            {/* The sliding dot indicator */}
             <div
               style={{
                 position: "absolute",
                 bottom: "-4px",
-                left: "10px", // Centers the 4px dot under the 24px text block
+                left: "10px",
                 width: "4px",
                 height: "4px",
                 borderRadius: "50%",
                 backgroundColor: dynamicColor,
-                transform: `translateX(${activeIndex * 36}px)`, // 24px width + 12px gap
+                transform: `translateX(${activeIndex * 36}px)`,
                 transition:
                   "background-color 0.8s ease-in-out, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
               }}
@@ -158,7 +156,6 @@ export default function Header() {
             ))}
           </div>
 
-          {/* HAMBURGER MENU BUTTON */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             onMouseOver={(e) => {
@@ -175,7 +172,7 @@ export default function Header() {
               cursor: "pointer",
               display: "flex",
               flexDirection: "column",
-              gap: "7px",
+              gap: "5px",
               padding: "0",
               zIndex: 60,
               transition: "transform 0.3s ease, opacity 0.3s ease",
@@ -183,8 +180,8 @@ export default function Header() {
           >
             <div
               style={{
-                width: "24px",
-                height: "2.5px",
+                width: "18px",
+                height: "2px",
                 borderRadius: "2px",
                 backgroundColor: dynamicColor,
                 transition:
@@ -196,8 +193,8 @@ export default function Header() {
             />
             <div
               style={{
-                width: "24px",
-                height: "2.5px",
+                width: "18px",
+                height: "2px",
                 borderRadius: "2px",
                 backgroundColor: dynamicColor,
                 transition:
@@ -211,7 +208,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* BACKGROUND DIMMER / LEFT GLASS PANEL */}
+      {/* DIMMER & SIDEBAR CODE REMAINS EXACTLY THE SAME... */}
       <div
         onClick={() => setIsMenuOpen(false)}
         style={{
@@ -240,8 +237,6 @@ export default function Header() {
             : "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.5s",
         }}
       />
-
-      {/* SIDEBAR DRAWER / RIGHT PANEL */}
       <div
         style={{
           position: "fixed",
@@ -277,7 +272,6 @@ export default function Header() {
             const isCoreTopic = ["art", "education", "journalism"].includes(
               item,
             );
-
             return (
               <Link
                 key={item}
@@ -315,7 +309,6 @@ export default function Header() {
                 >
                   {String(index + 1).padStart(2, "0")}
                 </span>
-
                 <span
                   style={{
                     fontSize: isCoreTopic

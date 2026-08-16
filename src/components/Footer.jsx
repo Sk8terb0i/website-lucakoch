@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { translations } from "../translations";
 
@@ -7,15 +8,22 @@ export default function Footer() {
   const t = translations[lang];
   const [isZoomedIn, setIsZoomedIn] = useState(false);
 
+  const location = useLocation();
+  const isHome = location.pathname === "/";
+
   useEffect(() => {
     const handleZoom = (e) => setIsZoomedIn(e.detail);
     window.addEventListener("zoomStateChange", handleZoom);
     return () => window.removeEventListener("zoomStateChange", handleZoom);
   }, []);
 
+  // ALWAYS dark text on sub-pages. Only white when on the Home page AND zoomed out.
+  const dynamicColor =
+    isHome && !isZoomedIn ? "var(--background)" : "var(--text)";
+
   const getMarkerStyle = (rotation) => ({
     fontSize: "0.8rem",
-    color: isZoomedIn ? "var(--text)" : "var(--background)",
+    color: dynamicColor,
     textTransform: "lowercase",
     fontFamily: "'Satoshi', sans-serif",
     letterSpacing: "0.08em",
@@ -44,7 +52,7 @@ export default function Footer() {
       <div
         style={{
           height: "1px",
-          backgroundColor: isZoomedIn ? "var(--text)" : "var(--background)",
+          backgroundColor: dynamicColor,
           transition: "background-color 0.8s ease-in-out",
           opacity: 0.2,
           margin: "0 2.5rem",
