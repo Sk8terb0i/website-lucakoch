@@ -144,7 +144,7 @@ export default function Header() {
                   textAlign: "center",
                   cursor: "pointer",
                   fontSize: "0.75rem",
-                  fontFamily: "'Satoshi', sans-serif",
+                  fontFamily: "'BrandFont', sans-serif",
                   fontWeight: lang === l ? "700" : "500",
                   color: dynamicColor,
                   opacity: lang === l ? 1 : 0.4,
@@ -299,7 +299,7 @@ export default function Header() {
               >
                 <span
                   style={{
-                    fontFamily: "'Satoshi', sans-serif",
+                    fontFamily: "'BrandFont', sans-serif",
                     fontSize: "0.85rem",
                     fontWeight: "700",
                     color: "var(--text)",
@@ -315,12 +315,12 @@ export default function Header() {
                       ? isMobile
                         ? "3.2rem"
                         : "3.5rem"
-                      : "1.2rem",
+                      : "1.6rem",
                     fontWeight: isCoreTopic ? "700" : "400",
                     color: isCoreTopic ? `var(--${item})` : "var(--text)",
                     fontFamily: isCoreTopic
                       ? "'BrandFont', sans-serif"
-                      : "'Satoshi', sans-serif",
+                      : "'BrandFont', sans-serif",
                     textTransform: "lowercase",
                   }}
                 >

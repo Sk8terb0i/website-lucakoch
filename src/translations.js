@@ -4,7 +4,7 @@ export const translations = {
     artist: "Art",
     educator: "Education",
     backToDesktop: "Back to Desktop",
-    siteTitle: "Luca Koch Portfolio",
+    siteTitle: "Luca Pilu Koch",
     noItems: "No items found for this category.",
     // Menu & Page Titles
     biography: "Biography",
@@ -26,7 +26,7 @@ export const translations = {
     artist: "Kunst",
     educator: "Bildung",
     backToDesktop: "Zurück zum Desktop",
-    siteTitle: "Luca Koch Portfolio",
+    siteTitle: "Luca Pilu Koch",
     noItems: "Keine Einträge in dieser Kategorie gefunden.",
     // Menu & Page Titles
     biography: "Biografie",
@@ -48,7 +48,7 @@ export const translations = {
     artist: "Art",
     educator: "Éducation",
     backToDesktop: "Retour au bureau",
-    siteTitle: "Portfolio de Luca Koch",
+    siteTitle: "Luca Pilu Koch",
     noItems: "Aucun élément trouvé pour cette catégorie.",
     // Menu & Page Titles
     biography: "Biographie",

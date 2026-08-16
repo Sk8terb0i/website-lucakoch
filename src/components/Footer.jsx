@@ -22,10 +22,10 @@ export default function Footer() {
     isHome && !isZoomedIn ? "var(--background)" : "var(--text)";
 
   const getMarkerStyle = (rotation) => ({
-    fontSize: "0.8rem",
+    fontSize: "1rem",
     color: dynamicColor,
     textTransform: "lowercase",
-    fontFamily: "'Satoshi', sans-serif",
+    fontFamily: "'BrandFont', sans-serif",
     letterSpacing: "0.08em",
     transition:
       "color 0.8s ease-in-out, opacity 0.2s ease, transform 0.2s ease",

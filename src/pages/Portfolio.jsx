@@ -104,7 +104,11 @@ const CurvedLink = ({
         strokeWidth={isMobile ? "18" : "22"}
         strokeOpacity={isHovered ? 0.7 : 0.5}
         strokeLinecap="butt"
-        strokeDasharray={`0 ${startPx} ${textLen} ${C * 2}`}
+        strokeDasharray={
+          isMobile
+            ? `0 ${startPx} ${textLen} ${C * 2}`
+            : `0 ${startPx - 10} ${textLen + 20} ${C * 2}`
+        }
         fill="none"
         style={{ transition: "stroke-opacity 0.2s ease" }}
       />
@@ -112,15 +116,15 @@ const CurvedLink = ({
         textAnchor="middle"
         dominantBaseline="central"
         style={{
-          fontFamily: "'Satoshi', sans-serif",
-          fontSize: isMobile ? "11.5px" : "13.5px",
+          fontFamily: "'BrandFont', sans-serif",
+          fontSize: isMobile ? "16px" : "22px",
           fontWeight: link.isExternal ? "400" : "500",
           fontStyle: link.isExternal ? "italic" : "normal",
           fill: isHovered
             ? `var(--${topic})`
             : isZoomedIn
               ? "var(--text)"
-              : "var(--text)",
+              : "var(--background)",
           transition: "fill 0.4s ease",
         }}
       >
@@ -709,28 +713,28 @@ export default function Portfolio() {
                   overflow: "visible",
                 }}
               >
-                {/* DELICATE THIN DOTTED ORBIT RINGS */}
+                {/* DELICATE THIN DOTTED ORBIT RINGS WITH DYNAMIC COLOR FIX */}
                 <circle
                   cx="250"
                   cy="250"
                   r={R1}
-                  stroke="var(--text)"
+                  stroke={isZoomedIn ? "var(--text)" : "var(--background)"}
                   strokeWidth="0.8"
                   strokeDasharray="2 5"
                   fill="none"
-                  opacity={active ? 0.12 : 0}
-                  style={{ transition: "opacity 0.6s ease" }}
+                  opacity={active ? (isZoomedIn ? 0.12 : 0.3) : 0}
+                  style={{ transition: "opacity 0.6s ease, stroke 0.4s ease" }}
                 />
                 <circle
                   cx="250"
                   cy="250"
                   r={R2}
-                  stroke="var(--text)"
+                  stroke={isZoomedIn ? "var(--text)" : "var(--background)"}
                   strokeWidth="0.8"
                   strokeDasharray="2 5"
                   fill="none"
-                  opacity={active ? 0.12 : 0}
-                  style={{ transition: "opacity 0.6s ease" }}
+                  opacity={active ? (isZoomedIn ? 0.12 : 0.3) : 0}
+                  style={{ transition: "opacity 0.6s ease, stroke 0.4s ease" }}
                 />
 
                 <defs>
