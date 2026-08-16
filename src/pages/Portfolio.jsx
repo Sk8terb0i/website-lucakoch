@@ -6,88 +6,9 @@ import { translations } from "../translations";
 const CONTAINER_SIZE = "clamp(220px, 45vmin, 600px)";
 
 // ----------------------------------------------------------------------
-// 🎛️ EASY BACKGROUND IMAGES CONFIGURATION
+// 🎛️ EASY BACKGROUND IMAGE CONFIGURATION
 // ----------------------------------------------------------------------
-const BG_CONFIG = {
-  // Image quantity range
-  minImages: 3,
-  maxImages: 5,
-
-  // Image size limits (in px)
-  desktopWidthMin: 180,
-  desktopWidthMax: 250,
-  mobileWidthMin: 90,
-  mobileWidthMax: 120,
-
-  // Styling
-  borderRadius: "1px",
-
-  // --------------------------------------------------------------------
-  // 🎨 3D DEPTH PROFILES: SATURATION, OPACITY & Z-INDEX CONFIGURATION
-  // --------------------------------------------------------------------
-  depths: [
-    // Depth 0: Foreground / Nearest (Highest zIndex so it overlaps other images)
-    {
-      blur: "0px",
-      scale: 1.2,
-      saturate: { zoomedOut: "100%", zoomedIn: "95%" },
-      opacity: { zoomedOut: 0.9, zoomedIn: 0.8 },
-      zIndex: 3,
-    },
-    // Depth 1: Mid Distance
-    {
-      blur: "2px",
-      scale: 0.9,
-      saturate: { zoomedOut: "85%", zoomedIn: "80%" },
-      opacity: { zoomedOut: 0.7, zoomedIn: 0.6 },
-      zIndex: 2,
-    },
-    // Depth 2: Far Away
-    {
-      blur: "6px",
-      scale: 0.7,
-      saturate: { zoomedOut: "75%", zoomedIn: "70%" },
-      opacity: { zoomedOut: 0.5, zoomedIn: 0.4 },
-      zIndex: 1,
-    },
-  ],
-
-  // --------------------------------------------------------------------
-  // 📍 POSITION ZONES (Dodges all pink marked zones while hugging the triangle)
-  // Categorized into Top (top <= 30%), Bottom (top >= 70%), and Middle
-  // --------------------------------------------------------------------
-  positions: [
-    // TOP ZONE (top <= 30%)
-    { id: "top-left-sub", top: "12%", left: "10%", zone: "top" }, // Under logo, left of 'art'
-    { id: "top-right-sub", top: "12%", left: "90%", zone: "top" }, // Under header controls, right of 'art'
-    { id: "top-inner-left", top: "22%", left: "28%", zone: "top" }, // Close to upper-left triangle slope
-    { id: "top-inner-right", top: "22%", left: "72%", zone: "top" }, // Close to upper-right triangle slope
-
-    // BOTTOM ZONE (top >= 70%)
-    { id: "bot-left-bleed", top: "86%", left: "10%", zone: "bottom" }, // Below 'journalism'
-    { id: "bot-right-bleed", top: "86%", left: "90%", zone: "bottom" }, // Below 'education'
-    { id: "bot-center-bleed", top: "92%", left: "50%", zone: "bottom" }, // Bleeding off bottom-center edge
-
-    // MIDDLE ZONE (Close to triangle sides + edge bleed positions)
-    { id: "mid-left-close", top: "45%", left: "16%", zone: "mid" }, // Hugs left triangle edge horizontally
-    { id: "mid-right-close", top: "45%", left: "84%", zone: "mid" }, // Hugs right triangle edge horizontally
-    { id: "mid-far-left-edge", top: "42%", left: "2%", zone: "mid" }, // Bleeds off left screen edge
-    { id: "mid-far-right-edge", top: "42%", left: "98%", zone: "mid" }, // Bleeds off right screen edge
-  ],
-};
-
-const MAX_SLOTS = BG_CONFIG.maxImages;
-
-// ----------------------------------------------------------------------
-// 🖼️ TOP-LEVEL VITE BACKGROUND IMAGE LOADER
-// ----------------------------------------------------------------------
-const bgModules = import.meta.glob("../assets/backgrounds/*", {
-  eager: true,
-});
-
-const BACKGROUND_IMAGES = Object.values(bgModules).map(
-  (mod) => mod.default || mod,
-);
+const BACKGROUND_IMAGE = "/LUCAKOCH_4480x6720_NicolePfister_9093_MASTER.jpg";
 
 const CORNERS = {
   artist: { x: "50%", y: "15%" },
@@ -138,7 +59,6 @@ const CurvedLink = ({ link, topic, active, isMobile, navigate }) => {
   const scale = active ? 1 : 0.6;
   const opacity = active ? 1 : 0;
 
-  // Exact Arc Calculation for the Marker Background on a FULL CIRCLE
   const C = 2 * Math.PI * link.r;
   const titleText = link.title + (link.isExternal ? "  " : "");
   const calcWidth = getApproxWidth(titleText, isMobile);
@@ -165,7 +85,6 @@ const CurvedLink = ({ link, topic, active, isMobile, navigate }) => {
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
     >
-      {/* PERFECT CRISP MARKER BACKGROUND */}
       <use
         href={`#${pathId}`}
         stroke={`var(--${topic})`}
@@ -176,8 +95,6 @@ const CurvedLink = ({ link, topic, active, isMobile, navigate }) => {
         fill="none"
         style={{ transition: "stroke-opacity 0.2s ease" }}
       />
-
-      {/* FOREGROUND TEXT */}
       <text
         textAnchor="middle"
         dominantBaseline="central"
@@ -207,20 +124,8 @@ export default function Portfolio() {
   const [isTriangleHovered, setIsTriangleHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Persistent 3D Slots Array for Smooth Interpolation
-  const [slots, setSlots] = useState(() =>
-    Array.from({ length: MAX_SLOTS }, (_, index) => ({
-      id: index,
-      src: "",
-      top: "50%",
-      left: "50%",
-      width: "200px",
-      scale: 0.3,
-      blur: "10px",
-      depth: BG_CONFIG.depths[2],
-      active: false,
-    })),
-  );
+  // High-performance trigger for the liquid distortion on zoom
+  const [zoomReactionKey, setZoomReactionKey] = useState(0);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -228,98 +133,18 @@ export default function Portfolio() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ----------------------------------------------------------------------
-  // 🎲 SMOOTH 3D SPATIAL INTERPOLATION ENGINE (TOP & BOTTOM BALANCED)
-  // ----------------------------------------------------------------------
-  useEffect(() => {
-    if (!BACKGROUND_IMAGES.length) return;
-
-    let count = Math.min(
-      BACKGROUND_IMAGES.length,
-      Math.floor(
-        Math.random() * (BG_CONFIG.maxImages - BG_CONFIG.minImages + 1),
-      ) + BG_CONFIG.minImages,
-    );
-
-    if (!isMobile && !activeCluster && count === 4) {
-      count = Math.random() < 0.5 ? 3 : 5;
-      if (count > BACKGROUND_IMAGES.length) {
-        count = BACKGROUND_IMAGES.length >= 3 ? 3 : BACKGROUND_IMAGES.length;
-      }
-    }
-
-    const shuffledImages = [...BACKGROUND_IMAGES].sort(
-      () => 0.5 - Math.random(),
-    );
-    const selectedImages = shuffledImages.slice(0, count);
-
-    // GUARANTEED VERTICAL DISTRIBUTION LOGIC
-    const topPool = BG_CONFIG.positions.filter((p) => p.zone === "top");
-    const bottomPool = BG_CONFIG.positions.filter((p) => p.zone === "bottom");
-
-    // Force 1 random Top position and 1 random Bottom position
-    const selectedTop = topPool[Math.floor(Math.random() * topPool.length)];
-    const selectedBottom =
-      bottomPool[Math.floor(Math.random() * bottomPool.length)];
-
-    // Fill the remaining needed positions from the rest of the pool
-    const remainingPool = BG_CONFIG.positions
-      .filter((p) => p !== selectedTop && p !== selectedBottom)
-      .sort(() => 0.5 - Math.random());
-
-    const balancedPositions = [
-      selectedTop,
-      selectedBottom,
-      ...remainingPool.slice(0, count - 2),
-    ].sort(() => 0.5 - Math.random());
-
-    setSlots((prevSlots) =>
-      prevSlots.map((slot, index) => {
-        const isActive = index < count;
-
-        if (!isActive) {
-          return {
-            ...slot,
-            active: false,
-            scale: 0.3,
-            blur: "8px",
-          };
-        }
-
-        const pos = balancedPositions[index % balancedPositions.length];
-        const depth =
-          index === 0
-            ? BG_CONFIG.depths[0]
-            : BG_CONFIG.depths[
-                Math.floor(Math.random() * BG_CONFIG.depths.length)
-              ];
-
-        const minW = isMobile
-          ? BG_CONFIG.mobileWidthMin
-          : BG_CONFIG.desktopWidthMin;
-        const maxW = isMobile
-          ? BG_CONFIG.mobileWidthMax
-          : BG_CONFIG.desktopWidthMax;
-        const widthPx = Math.floor(Math.random() * (maxW - minW + 1)) + minW;
-
-        return {
-          id: slot.id,
-          active: true,
-          src: selectedImages[index],
-          top: pos.top,
-          left: pos.left,
-          width: `${widthPx}px`,
-          scale: depth.scale,
-          blur: depth.blur,
-          depth: depth,
-        };
-      }),
-    );
-  }, [activeCluster, isMobile]);
-
-  // Determine current zoom state
   const isZoomedIn = activeCluster !== null && activeCluster !== "all";
-  const stateKey = isZoomedIn ? "zoomedIn" : "zoomedOut";
+
+  // Trigger Header/Footer color change
+  useEffect(() => {
+    const event = new CustomEvent("zoomStateChange", { detail: isZoomedIn });
+    window.dispatchEvent(event);
+  }, [isZoomedIn]);
+
+  // Triggers the pure SVG distortion spike when zooming
+  useEffect(() => {
+    setZoomReactionKey(Date.now());
+  }, [activeCluster]);
 
   // ----------------------------------------------------------------------
   // ⚙️ EASY LAYOUT CONFIGURATION
@@ -626,62 +451,90 @@ export default function Portfolio() {
         backgroundColor: "var(--background)",
       }}
     >
-      {/* 🖼️ FLUID 3D INTERPOLATED BACKGROUND LAYER (Entire layer stays at zIndex: 0) */}
+      {/* 💧 FLUID ORGANIC SVG FILTER WITH ZOOM SPIKE */}
+      <svg
+        style={{ position: "absolute", width: 0, height: 0 }}
+        aria-hidden="true"
+      >
+        <defs>
+          <filter
+            id="liquid-surface"
+            x="-30%"
+            y="-30%"
+            width="160%"
+            height="160%"
+          >
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.012 0.02"
+              numOctaves="2"
+              result="noise"
+            >
+              <animate
+                attributeName="baseFrequency"
+                values="0.012 0.02; 0.02 0.012; 0.012 0.02"
+                dur="8s"
+                repeatCount="indefinite"
+              />
+            </feTurbulence>
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="noise"
+              scale="22"
+              xChannelSelector="R"
+              yChannelSelector="B"
+            >
+              {/* This effortlessly spikes the distortion during the 0.8s transition window without shifting the element */}
+              <animate
+                key={zoomReactionKey}
+                attributeName="scale"
+                values="22; 80; 22"
+                dur="0.8s"
+                calcMode="spline"
+                keySplines="0.25 1 0.5 1; 0.25 1 0.5 1"
+                keyTimes="0; 0.5; 1"
+                repeatCount="1"
+              />
+            </feDisplacementMap>
+          </filter>
+        </defs>
+      </svg>
+
+      {/* 🍃 NATURAL 2D FIGURE-8 DRIFT */}
+      <style>
+        {`
+          @keyframes liquidDrift {
+            0% { transform: translate(0px, 0px) rotate(0deg); }
+            20% { transform: translate(3px, -2px) rotate(0.5deg); }
+            40% { transform: translate(-2px, 4px) rotate(-0.5deg); }
+            60% { transform: translate(-4px, -1px) rotate(1deg); }
+            80% { transform: translate(1px, 3px) rotate(-1deg); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+          }
+        `}
+      </style>
+
+      {/* 🖼️ SINGLE BACKGROUND IMAGE - 15% OPACITY WHEN ZOOMED */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
           zIndex: 0,
+          opacity: isZoomedIn ? 0.15 : 1,
+          transition: "opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1)",
         }}
       >
-        {slots.map((slot) => {
-          const currentOpacity = slot.active ? slot.depth.opacity[stateKey] : 0;
-          const currentSaturate = slot.depth.saturate[stateKey];
-          const slotZIndex = slot.active ? slot.depth.zIndex : 0;
-
-          return (
-            <div
-              key={slot.id}
-              style={{
-                position: "absolute",
-                top: slot.top,
-                left: slot.left,
-                width: slot.width,
-                opacity: currentOpacity,
-                filter: `blur(${slot.blur}) saturate(${currentSaturate})`,
-                // Force hardware acceleration for vastly smoother mobile transitions
-                transform: `translate3d(-50%, -50%, 0) scale(${slot.scale})`,
-                borderRadius: BG_CONFIG.borderRadius,
-                boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
-                zIndex: slotZIndex,
-                transition:
-                  "top 1.6s cubic-bezier(0.16, 1, 0.3, 1), left 1.6s cubic-bezier(0.16, 1, 0.3, 1), transform 1.6s cubic-bezier(0.16, 1, 0.3, 1), filter 1.6s ease-in-out, opacity 1.2s ease-in-out, width 1.6s cubic-bezier(0.16, 1, 0.3, 1)",
-                overflow: "hidden",
-                // Performance optimizations
-                willChange: "transform, opacity, filter, top, left, width",
-                backfaceVisibility: "hidden",
-                WebkitBackfaceVisibility: "hidden",
-              }}
-            >
-              {slot.src && (
-                <img
-                  src={slot.src}
-                  alt=""
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "block",
-                    objectFit: "cover",
-                    borderRadius: BG_CONFIG.borderRadius,
-                    transition: "opacity 0.8s ease-in-out",
-                    willChange: "opacity", // Performance optimization
-                  }}
-                />
-              )}
-            </div>
-          );
-        })}
+        <img
+          src={BACKGROUND_IMAGE}
+          alt="Background"
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            display: "block",
+          }}
+        />
       </div>
 
       <div
@@ -696,36 +549,47 @@ export default function Portfolio() {
           zIndex: 2,
         }}
       >
-        {/* INTERACTIVE GRADIENT TRIANGLE */}
+        {/* OUTER WRAPPER: Continuous smooth 2D drift without zoom popping */}
         <div
-          onClick={handleTriangleClick}
-          onMouseEnter={() => setIsTriangleHovered(true)}
-          onMouseLeave={() => setIsTriangleHovered(false)}
           style={{
             position: "absolute",
             inset: 0,
-            zIndex: 5,
-            cursor: "pointer",
-            clipPath: `polygon(${CORNERS.artist.x} ${CORNERS.artist.y}, ${CORNERS.journalist.x} ${CORNERS.journalist.y}, ${CORNERS.educator.x} ${CORNERS.educator.y})`,
-            transform: triangleTransform,
-            filter: isTriangleHovered
-              ? "brightness(1.08) drop-shadow(0 0 15px rgba(0,0,0,0.12))"
-              : "none",
-            transition:
-              "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s ease",
+            animation: "liquidDrift 10s ease-in-out infinite",
+            pointerEvents: "none",
           }}
         >
+          {/* THE LIQUID TRIANGLE */}
           <div
+            onClick={handleTriangleClick}
+            onMouseEnter={() => setIsTriangleHovered(true)}
+            onMouseLeave={() => setIsTriangleHovered(false)}
             style={{
               position: "absolute",
               inset: 0,
-              background: `radial-gradient(circle at ${CORNERS.artist.x} ${CORNERS.artist.y}, var(--artist) 0%, transparent 70%), radial-gradient(circle at ${CORNERS.journalist.x} ${CORNERS.journalist.y}, var(--journalist) 0%, transparent 70%), radial-gradient(circle at ${CORNERS.educator.x} ${CORNERS.educator.y}, var(--educator) 0%, transparent 70%)`,
+              zIndex: 5,
+              cursor: "pointer",
+              pointerEvents: "auto",
+              clipPath: `polygon(${CORNERS.artist.x} ${CORNERS.artist.y}, ${CORNERS.journalist.x} ${CORNERS.journalist.y}, ${CORNERS.educator.x} ${CORNERS.educator.y})`,
+              transform: triangleTransform,
+              filter: isTriangleHovered
+                ? "url(#liquid-surface) brightness(1.08) drop-shadow(0 0 15px rgba(0,0,0,0.12))"
+                : "url(#liquid-surface)",
+              transition:
+                "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), filter 0.4s ease",
             }}
-          />
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: `radial-gradient(circle at ${CORNERS.artist.x} ${CORNERS.artist.y}, var(--artist) 0%, transparent 70%), radial-gradient(circle at ${CORNERS.journalist.x} ${CORNERS.journalist.y}, var(--journalist) 0%, transparent 70%), radial-gradient(circle at ${CORNERS.educator.x} ${CORNERS.educator.y}, var(--educator) 0%, transparent 70%)`,
+              }}
+            />
 
-          <div style={getWaveStyle("artist")} />
-          <div style={getWaveStyle("journalist")} />
-          <div style={getWaveStyle("educator")} />
+            <div style={getWaveStyle("artist")} />
+            <div style={getWaveStyle("journalist")} />
+            <div style={getWaveStyle("educator")} />
+          </div>
         </div>
 
         {/* TOPICS & SVG CIRCULAR WORD CLUSTERS */}
@@ -771,7 +635,7 @@ export default function Portfolio() {
                     color: `var(--${topic})`,
                     fontFamily: "BrandFont, sans-serif",
                     textTransform: "lowercase",
-                    fontSize: isMobile ? "1.3rem" : "2.2rem",
+                    fontSize: isMobile ? "2rem" : "3rem",
                     margin: 0,
                     cursor: "pointer",
                     userSelect: "none",

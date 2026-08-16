@@ -1,24 +1,29 @@
+import { useState, useEffect } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { translations } from "../translations";
 
 export default function Footer() {
   const { lang } = useLanguage();
   const t = translations[lang];
+  const [isZoomedIn, setIsZoomedIn] = useState(false);
+
+  useEffect(() => {
+    const handleZoom = (e) => setIsZoomedIn(e.detail);
+    window.addEventListener("zoomStateChange", handleZoom);
+    return () => window.removeEventListener("zoomStateChange", handleZoom);
+  }, []);
 
   const getMarkerStyle = (rotation) => ({
     fontSize: "0.8rem",
-    color: "var(--text)",
+    color: isZoomedIn ? "var(--text)" : "var(--background)",
     textTransform: "lowercase",
     fontFamily: "'Satoshi', sans-serif",
     letterSpacing: "0.08em",
-    transition: "opacity 0.2s ease, transform 0.2s ease",
+    transition:
+      "color 0.8s ease-in-out, opacity 0.2s ease, transform 0.2s ease",
     pointerEvents: "auto",
     cursor: "pointer",
     fontWeight: "normal",
-    /* IMPERFECT ORGANIC MARKER HIGHLIGHT */
-    backgroundColor: "var(--background)",
-    padding: "0.15em 0.55em 0.2em 0.45em",
-    borderRadius: "255px 15px 225px 15px / 15px 225px 15px 255px",
     display: "inline-block",
     transform: `rotate(${rotation})`,
   });
@@ -39,8 +44,9 @@ export default function Footer() {
       <div
         style={{
           height: "1px",
-          backgroundColor: "var(--text)",
-          opacity: 0.15,
+          backgroundColor: isZoomedIn ? "var(--text)" : "var(--background)",
+          transition: "background-color 0.8s ease-in-out",
+          opacity: 0.2,
           margin: "0 2.5rem",
         }}
       />

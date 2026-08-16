@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { translations } from "../translations";
@@ -10,63 +10,27 @@ export default function Header() {
   const t = translations[lang];
 
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isLangOverlapped, setIsLangOverlapped] = useState(false);
-  const langSwitchRef = useRef(null);
+  const [isZoomedIn, setIsZoomedIn] = useState(false);
 
+  // Handle Resize & Zoom State
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleZoom = (e) => setIsZoomedIn(e.detail);
+
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // ----------------------------------------------------------------------
-  // 🔍 DYNAMIC OVERLAP DETECTOR FOR LANGUAGE SWITCH BORDER
-  // ----------------------------------------------------------------------
-  useEffect(() => {
-    const checkOverlap = () => {
-      if (!langSwitchRef.current) return;
-      const langRect = langSwitchRef.current.getBoundingClientRect();
-      const images = document.querySelectorAll("img");
-      let overlapping = false;
-
-      for (let img of images) {
-        const imgRect = img.getBoundingClientRect();
-
-        // Skip invisible or faded-out slots
-        const style = window.getComputedStyle(img.parentElement || img);
-        if (style.opacity === "0" || style.display === "none") continue;
-
-        const isIntersecting = !(
-          langRect.right < imgRect.left ||
-          langRect.left > imgRect.right ||
-          langRect.bottom < imgRect.top ||
-          langRect.top > imgRect.bottom
-        );
-
-        if (isIntersecting) {
-          overlapping = true;
-          break;
-        }
-      }
-      setIsLangOverlapped(overlapping);
-    };
-
-    const interval = setInterval(checkOverlap, 100);
-    window.addEventListener("resize", checkOverlap);
-    window.addEventListener("scroll", checkOverlap);
+    window.addEventListener("zoomStateChange", handleZoom);
 
     return () => {
-      clearInterval(interval);
-      window.removeEventListener("resize", checkOverlap);
-      window.removeEventListener("scroll", checkOverlap);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("zoomStateChange", handleZoom);
     };
   }, []);
 
   const menuItems = [
-    "biography",
     "art",
     "education",
     "journalism",
+    "biography",
     "media",
     "newsletter",
     "calendar",
@@ -76,6 +40,9 @@ export default function Header() {
 
   const DESKTOP_WIDTH = "450px";
 
+  // Dynamic colors based on zoom state
+  const dynamicColor = isZoomedIn ? "var(--text)" : "var(--background)";
+
   return (
     <>
       <header
@@ -84,7 +51,7 @@ export default function Header() {
           top: 0,
           left: 0,
           right: 0,
-          padding: "2rem 2.5rem",
+          padding: isMobile ? "1rem 1rem" : "2rem 2.5rem",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -93,7 +60,7 @@ export default function Header() {
         }}
       >
         {/* LEFT: SITE TITLE */}
-        <div style={{ pointerEvents: "auto" }}>
+        <div style={{ pointerEvents: "auto", flexShrink: 1, minWidth: 0 }}>
           <Link
             to="/"
             onClick={() => setIsMenuOpen(false)}
@@ -114,18 +81,15 @@ export default function Header() {
             <h1
               style={{
                 margin: 0,
-                fontSize: "1rem",
+                fontSize: isMobile ? "1.5rem" : "2rem",
                 fontWeight: "500",
                 letterSpacing: "0.05em",
-                color: "var(--text)",
+                color: dynamicColor,
                 fontFamily: "BrandFont, sans-serif",
-                paddingTop: "4px",
-                /* IMPERFECT ORGANIC MARKER HIGHLIGHT */
-                backgroundColor: "var(--background)",
-                padding: "0.15em 0.6em 0.2em 0.5em",
-                borderRadius: "255px 15px 225px 15px / 15px 225px 15px 255px",
                 display: "inline-block",
                 transform: "rotate(-0.6deg)",
+                whiteSpace: "nowrap",
+                transition: "color 0.8s ease-in-out",
               }}
             >
               {t.siteTitle}
@@ -138,35 +102,33 @@ export default function Header() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "2rem",
+            gap: isMobile ? "1.25rem" : "2.5rem",
             pointerEvents: "auto",
+            flexShrink: 0,
           }}
         >
-          {/* LANGUAGE TOGGLE WITH DYNAMIC OVERLAP BORDER */}
+          {/* SUBTLE LANGUAGE TOGGLE */}
           <div
-            ref={langSwitchRef}
             style={{
               display: "flex",
               alignItems: "center",
               position: "relative",
-              border: `1px solid ${
-                isLangOverlapped ? "var(--background)" : "var(--text)"
-              }`,
-              borderRadius: "30px",
-              padding: "4px",
-              backgroundColor: "var(--background)",
-              transition: "border-color 0.3s ease",
+              gap: "12px",
             }}
           >
+            {/* The sliding dot indicator */}
             <div
               style={{
                 position: "absolute",
-                width: "24px",
-                height: "24px",
-                backgroundColor: "var(--text)",
+                bottom: "-4px",
+                left: "10px", // Centers the 4px dot under the 24px text block
+                width: "4px",
+                height: "4px",
                 borderRadius: "50%",
-                transform: `translateX(${activeIndex * 100}%)`,
-                transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
+                backgroundColor: dynamicColor,
+                transform: `translateX(${activeIndex * 36}px)`, // 24px width + 12px gap
+                transition:
+                  "background-color 0.8s ease-in-out, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
               }}
             />
             {languages.map((l) => (
@@ -174,24 +136,21 @@ export default function Header() {
                 key={l}
                 onClick={() => setLang(l)}
                 onMouseOver={(e) => {
-                  if (lang !== l) e.currentTarget.style.opacity = 0.5;
+                  if (lang !== l) e.currentTarget.style.opacity = 0.7;
                 }}
                 onMouseOut={(e) => {
-                  if (lang !== l) e.currentTarget.style.opacity = 1;
+                  if (lang !== l) e.currentTarget.style.opacity = 0.4;
                 }}
                 style={{
                   width: "24px",
-                  height: "24px",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  zIndex: 1,
+                  textAlign: "center",
                   cursor: "pointer",
-                  fontSize: "0.65rem",
+                  fontSize: "0.75rem",
                   fontFamily: "'Satoshi', sans-serif",
-                  fontWeight: "700",
-                  color: lang === l ? "var(--background)" : "var(--text)",
-                  transition: "color 0.4s, opacity 0.2s ease",
+                  fontWeight: lang === l ? "700" : "500",
+                  color: dynamicColor,
+                  opacity: lang === l ? 1 : 0.4,
+                  transition: "color 0.8s ease-in-out, opacity 0.3s ease",
                 }}
               >
                 {l}
@@ -227,9 +186,9 @@ export default function Header() {
                 width: "24px",
                 height: "2.5px",
                 borderRadius: "2px",
-                backgroundColor: "var(--text)",
-                boxShadow: "0 0 0 2px var(--background)",
-                transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
+                backgroundColor: dynamicColor,
+                transition:
+                  "background-color 0.8s ease-in-out, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
                 transform: isMenuOpen
                   ? "translateY(4.75px) rotate(45deg)"
                   : "none",
@@ -240,9 +199,9 @@ export default function Header() {
                 width: "24px",
                 height: "2.5px",
                 borderRadius: "2px",
-                backgroundColor: "var(--text)",
-                boxShadow: "0 0 0 2px var(--background)",
-                transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
+                backgroundColor: dynamicColor,
+                transition:
+                  "background-color 0.8s ease-in-out, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
                 transform: isMenuOpen
                   ? "translateY(-4.75px) rotate(-45deg)"
                   : "none",

@@ -4,17 +4,16 @@
 :root {
   --text: #141c09;
   --background: #fff7fc;
-  /* Retaining some base colors from original or updating them */
   --primary: #6e7263;
   --secondary: #dfd9e8;
   --accent: #fcfcfc;
   
-  /* New Category Colors */
+  /* Category Colors */
   --art: #f3a1e5;
   --education: #b1d182;
   --journalism: #ebcc19;
 
-  /* Mapped for backwards compatibility with Portfolio.jsx */
+  /* Mapped for backwards compatibility */
   --artist: var(--art);
   --educator: var(--education);
   --journalist: var(--journalism);
@@ -34,23 +33,14 @@
   font-display: swap;
 }
 
-/* THE PATCH: Forced Satoshi for ALL Accents & Umlauts 
-   This range (U+00A0-00FF) covers: ä ö ü Ä Ö Ü é è ê ë à â î ï ô û ù ç É È À Ç etc. */
+/* THE MAIN FONT: Custom handwriting font */
 @font-face {
   font-family: 'BrandFont';
-  src: url('/fonts/Satoshi-Variable.woff2') format('woff2');
-  unicode-range: U+00A0-00FF; 
-}
-
-/* THE MAIN FONT: Strictly limited to Standard A-Z, 0-9, and Basic Punctuation
-   By stopping at U+00BF, we explicitly forbid it from trying to render accents. */
-@font-face {
-  font-family: 'BrandFont';
-  src: url('/fonts/bosch.otf') format('opentype');
+  src: url('/fonts/lucakochfont.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
-  unicode-range: U+0000-00BF; 
+  /* Removed the restrictive unicode-range so all accents now work perfectly! */
 }
 
 /* ============================================================
