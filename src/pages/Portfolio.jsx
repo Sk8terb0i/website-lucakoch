@@ -10,6 +10,12 @@ const CONTAINER_SIZE = "clamp(220px, 45vmin, 600px)";
 // ----------------------------------------------------------------------
 const BACKGROUND_IMAGE = "/LUCAKOCH_4480x6720_NicolePfister_9093_MASTER.jpg";
 
+// Adjust the desktop percentage to move the crop up or down (e.g., "center top", "center 20%")
+const BACKGROUND_POSITION = {
+  desktop: "center 20%",
+  mobile: "center center",
+};
+
 const CORNERS = {
   artist: { x: "50%", y: "15%" },
   journalist: { x: "15%", y: "80%" },
@@ -43,7 +49,14 @@ const getApproxWidth = (str, isMobile) => {
 };
 
 // SVG Component to render curved text with a FLAWLESS crisp marker stroke
-const CurvedLink = ({ link, topic, active, isMobile, navigate }) => {
+const CurvedLink = ({
+  link,
+  topic,
+  active,
+  isMobile,
+  navigate,
+  isZoomedIn,
+}) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = (e) => {
@@ -89,7 +102,7 @@ const CurvedLink = ({ link, topic, active, isMobile, navigate }) => {
         href={`#${pathId}`}
         stroke={`var(--${topic})`}
         strokeWidth={isMobile ? "18" : "22"}
-        strokeOpacity={isHovered ? 0.38 : 0.22}
+        strokeOpacity={isHovered ? 0.7 : 0.5}
         strokeLinecap="butt"
         strokeDasharray={`0 ${startPx} ${textLen} ${C * 2}`}
         fill="none"
@@ -103,8 +116,12 @@ const CurvedLink = ({ link, topic, active, isMobile, navigate }) => {
           fontSize: isMobile ? "11.5px" : "13.5px",
           fontWeight: link.isExternal ? "400" : "500",
           fontStyle: link.isExternal ? "italic" : "normal",
-          fill: isHovered ? `var(--${topic})` : "var(--text)",
-          transition: "fill 0.2s ease",
+          fill: isHovered
+            ? `var(--${topic})`
+            : isZoomedIn
+              ? "var(--text)"
+              : "var(--text)",
+          transition: "fill 0.4s ease",
         }}
       >
         <textPath href={`#${pathId}`} startOffset={link.offset}>
@@ -532,6 +549,9 @@ export default function Portfolio() {
             width: "100%",
             height: "100%",
             objectFit: "cover",
+            objectPosition: isMobile
+              ? BACKGROUND_POSITION.mobile
+              : BACKGROUND_POSITION.desktop,
             display: "block",
           }}
         />
@@ -738,6 +758,7 @@ export default function Portfolio() {
                     active={active}
                     isMobile={isMobile}
                     navigate={navigate}
+                    isZoomedIn={isZoomedIn}
                   />
                 ))}
               </svg>
