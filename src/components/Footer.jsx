@@ -7,22 +7,29 @@ export default function Footer() {
   const { lang } = useLanguage();
   const t = translations[lang];
   const [isZoomedIn, setIsZoomedIn] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const location = useLocation();
   const isHome = location.pathname === "/";
 
   useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     const handleZoom = (e) => setIsZoomedIn(e.detail);
+
+    window.addEventListener("resize", handleResize);
     window.addEventListener("zoomStateChange", handleZoom);
-    return () => window.removeEventListener("zoomStateChange", handleZoom);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("zoomStateChange", handleZoom);
+    };
   }, []);
 
-  // ALWAYS dark text on sub-pages. Only white when on the Home page AND zoomed out.
   const dynamicColor =
     isHome && !isZoomedIn ? "var(--background)" : "var(--text)";
 
   const getMarkerStyle = (rotation) => ({
-    fontSize: "1rem",
+    fontSize: isMobile ? "0.9rem" : "1rem",
     color: dynamicColor,
     textTransform: "lowercase",
     fontFamily: "'BrandFont', sans-serif",
@@ -46,6 +53,11 @@ export default function Footer() {
         zIndex: 50,
         pointerEvents: "none",
         opacity: 0.75,
+        // Hardware acceleration fixes mobile position-fixed scroll jitter
+        WebkitTransform: "translateZ(0)",
+        transform: "translateZ(0)",
+        WebkitBackfaceVisibility: "hidden",
+        backfaceVisibility: "hidden",
       }}
     >
       {/* THE THIN DELINEATION LINE */}
@@ -55,17 +67,17 @@ export default function Footer() {
           backgroundColor: dynamicColor,
           transition: "background-color 0.8s ease-in-out",
           opacity: 0.2,
-          margin: "0 2.5rem",
+          margin: isMobile ? "0 1rem" : "0 2.5rem",
         }}
       />
 
       {/* FOOTER TEXT LINKS */}
       <div
         style={{
-          padding: "1.5rem 2.5rem",
+          padding: isMobile ? "1rem 1rem" : "1.5rem 2.5rem",
           display: "flex",
           justifyContent: "center",
-          gap: "3rem",
+          gap: isMobile ? "1.5rem" : "3rem",
         }}
       >
         <a

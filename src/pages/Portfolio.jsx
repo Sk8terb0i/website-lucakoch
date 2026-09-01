@@ -593,8 +593,17 @@ export default function Portfolio() {
               zIndex: 5,
               cursor: "pointer",
               pointerEvents: "auto",
+
+              // 1. Safari-specific prefix for the polygon
+              WebkitClipPath: `polygon(${CORNERS.artist.x} ${CORNERS.artist.y}, ${CORNERS.journalist.x} ${CORNERS.journalist.y}, ${CORNERS.educator.x} ${CORNERS.educator.y})`,
               clipPath: `polygon(${CORNERS.artist.x} ${CORNERS.artist.y}, ${CORNERS.journalist.x} ${CORNERS.journalist.y}, ${CORNERS.educator.x} ${CORNERS.educator.y})`,
-              transform: triangleTransform,
+
+              // 2. Force hardware acceleration by appending translateZ(0)
+              transform: `${triangleTransform} translateZ(0)`,
+
+              // 3. Optimize rendering performance in WebKit
+              willChange: "transform, filter",
+
               filter: isTriangleHovered
                 ? "url(#liquid-surface) brightness(1.08) drop-shadow(0 0 15px rgba(0,0,0,0.12))"
                 : "url(#liquid-surface)",

@@ -1,33 +1,8 @@
-import { Link } from "react-router-dom";
+import JournalismList from "../../components/JournalismList";
+import { useLanguage } from "../../context/LanguageContext";
+import { translations } from "../../translations";
 
 export default function TvPage() {
-  return (
-    <article
-      style={{
-        maxWidth: "800px",
-        margin: "12vh auto 8vh auto",
-        padding: "2rem",
-      }}
-    >
-      <Link
-        to="/journalism"
-        style={{ color: "var(--text)", opacity: 0.6, textDecoration: "none" }}
-      >
-        ← Back to Journalismus
-      </Link>
-      <h1
-        style={{
-          fontSize: "3rem",
-          color: "var(--journalism)",
-          fontFamily: "Satoshi, sans-serif",
-          marginTop: "1rem",
-        }}
-      >
-        TV
-      </h1>
-      <p style={{ color: "var(--primary)", lineHeight: 1.6 }}>
-        [ Placeholder content for TV ]
-      </p>
-    </article>
-  );
+  const { lang } = useLanguage();
+  return <JournalismList category="tv" title={translations[lang].tv} />;
 }

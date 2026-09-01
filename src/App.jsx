@@ -34,6 +34,7 @@ import Newsletter from "./pages/Newsletter";
 import Calendar from "./pages/Calendar";
 import Contact from "./pages/Contact";
 import Shop from "./pages/Shop";
+import Admin from "./pages/Admin";
 
 function App() {
   return (
@@ -78,6 +79,9 @@ function App() {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/shop" element={<Shop />} />
+
+        {/* Admin Panel */}
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </LanguageProvider>
   );

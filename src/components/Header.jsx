@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom"; // Add useLocation
+import { Link, useLocation } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import { translations } from "../translations";
 
@@ -41,7 +41,6 @@ export default function Header() {
   ];
   const DESKTOP_WIDTH = "450px";
 
-  // ALWAYS dark text on sub-pages. Only white when on the Home page AND zoomed out.
   const dynamicColor =
     isHome && !isZoomedIn ? "var(--background)" : "var(--text)";
 
@@ -59,6 +58,11 @@ export default function Header() {
           alignItems: "center",
           zIndex: 60,
           pointerEvents: "none",
+          // Hardware acceleration fixes mobile position-fixed scroll jitter
+          WebkitTransform: "translateZ(0)",
+          transform: "translateZ(0)",
+          WebkitBackfaceVisibility: "hidden",
+          backfaceVisibility: "hidden",
         }}
       >
         <div style={{ pointerEvents: "auto", flexShrink: 1, minWidth: 0 }}>
@@ -84,7 +88,6 @@ export default function Header() {
                 margin: 0,
                 fontSize: isMobile ? "1.5rem" : "2rem",
                 fontWeight: "500",
-
                 color: dynamicColor,
                 fontFamily: "BrandFont, sans-serif",
                 display: "inline-block",
@@ -208,7 +211,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* DIMMER & SIDEBAR CODE REMAINS EXACTLY THE SAME... */}
+      {/* DIMMER */}
       <div
         onClick={() => setIsMenuOpen(false)}
         style={{
@@ -237,6 +240,8 @@ export default function Header() {
             : "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.5s",
         }}
       />
+
+      {/* SIDEBAR */}
       <div
         style={{
           position: "fixed",
@@ -318,9 +323,7 @@ export default function Header() {
                       : "1.6rem",
                     fontWeight: isCoreTopic ? "700" : "400",
                     color: isCoreTopic ? `var(--${item})` : "var(--text)",
-                    fontFamily: isCoreTopic
-                      ? "'BrandFont', sans-serif"
-                      : "'BrandFont', sans-serif",
+                    fontFamily: "'BrandFont', sans-serif",
                     textTransform: "lowercase",
                   }}
                 >

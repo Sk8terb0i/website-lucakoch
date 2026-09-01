@@ -4,14 +4,14 @@
 :root {
   --text: #141c09;
   --background: #fff7fc;
-  --primary: #6e7263;
-  --secondary: #dfd9e8;
-  --accent: #fcfcfc;
+  --primary: #3a3a3a;
+  --secondary: #baa6da;
+  --accent: #fff1fa;
   
   /* Category Colors */
   --art: #f3a1e5;
   --education: #b1d182;
-  --journalism: #ebcc19;
+  --journalism: #d2b61c;
 
   /* Mapped for backwards compatibility */
   --artist: var(--art);
