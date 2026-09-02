@@ -1,23 +1,13 @@
 import { useState, useEffect } from "react";
-import { auth, db } from "../firebase";
+import { auth } from "../firebase";
 import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  doc,
-  deleteDoc,
-  updateDoc,
-} from "firebase/firestore";
 import { useLanguage } from "../context/LanguageContext";
 import { translations } from "../translations";
+import JournalismAdmin from "../components/admin/JournalismAdmin";
 
 export default function Admin() {
   const { lang } = useLanguage();
@@ -29,21 +19,7 @@ export default function Admin() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  // Independent Category States: list Category controls the lower list, formCategory controls the input form
-  const [listCategory, setListCategory] = useState("artikel");
-  const [formCategory, setFormCategory] = useState("artikel");
-
-  const [items, setItems] = useState([]);
-  const [isLoadingList, setIsLoadingList] = useState(false);
-  const [feedback, setFeedback] = useState(null);
-
-  const [editId, setEditId] = useState(null);
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [description, setDescription] = useState("");
-  const [link, setLink] = useState("");
-  const [entryLang, setEntryLang] = useState("DE");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("journalism");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -53,121 +29,19 @@ export default function Admin() {
     return () => unsubscribe();
   }, []);
 
-  const showFeedback = (message, type = "success") => {
-    setFeedback({ message, type });
-    setTimeout(() => setFeedback(null), 3000);
-  };
-
-  const fetchItems = async () => {
-    if (!user) return;
-    setIsLoadingList(true);
-    try {
-      const q = query(
-        collection(db, "journalism_links"),
-        where("category", "==", listCategory),
-        orderBy("date", "desc"),
-      );
-      const snapshot = await getDocs(q);
-      setItems(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
-    } catch (error) {
-      showFeedback("Failed to load content.", "error");
-    } finally {
-      setIsLoadingList(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchItems();
-    cancelEdit();
-  }, [listCategory, user]);
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError("");
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      setLoginError("Login failed. Verify credentials.");
+      setLoginError(t.loginError || "Login failed. Verify credentials.");
     }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    const docData = {
-      title,
-      date,
-      category: formCategory,
-      description,
-      link,
-      language: entryLang,
-    };
-
-    try {
-      if (editId) {
-        await updateDoc(doc(db, "journalism_links", editId), docData);
-        showFeedback(t.update + " successful!");
-      } else {
-        await addDoc(collection(db, "journalism_links"), {
-          ...docData,
-          createdAt: new Date().toISOString(),
-        });
-        showFeedback("Added successfully!");
-      }
-      setListCategory(formCategory);
-      cancelEdit();
-      fetchItems();
-    } catch (error) {
-      showFeedback(error.message, "error");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleEditClick = (item) => {
-    setEditId(item.id);
-    setTitle(item.title || "");
-    setDate(item.date || "");
-    setDescription(item.description || "");
-    setLink(item.link || "");
-    setEntryLang(item.language || "DE");
-    setFormCategory(item.category || "artikel");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const cancelEdit = () => {
-    setEditId(null);
-    setTitle("");
-    setDate("");
-    setDescription("");
-    setLink("");
-    setEntryLang("DE");
-    setFormCategory(listCategory);
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this entry?")) return;
-    setIsLoadingList(true);
-    try {
-      await deleteDoc(doc(db, "journalism_links", id));
-      showFeedback(t.delete + " successful.", "success");
-      fetchItems();
-    } catch (error) {
-      showFeedback("Error deleting.", "error");
-      setIsLoadingList(false);
-    }
-  };
-
-  const getTabName = (tabKey) => {
-    if (tabKey === "artikel") return t.articles;
-    if (tabKey === "audio") return t.audio;
-    if (tabKey === "tv") return t.tv;
-    return tabKey;
   };
 
   const inputStyle = {
     padding: "14px 16px",
-    borderRadius: "8px",
+    borderRadius: "4px",
     border: "1px solid var(--secondary)",
     fontSize: "1rem",
     fontFamily: "inherit",
@@ -175,14 +49,16 @@ export default function Admin() {
     boxSizing: "border-box",
     backgroundColor: "var(--background)",
     color: "var(--text)",
+    outline: "none",
+    transition: "border-color 0.2s ease",
   };
 
   const buttonStyle = {
-    backgroundColor: "var(--primary)",
-    color: "var(--accent)",
+    backgroundColor: "var(--text)",
+    color: "var(--background)",
     padding: "14px 20px",
-    borderRadius: "8px",
-    border: "none",
+    borderRadius: "4px",
+    border: "1px solid var(--text)",
     fontSize: "1rem",
     cursor: "pointer",
     fontWeight: "600",
@@ -190,19 +66,19 @@ export default function Admin() {
 
   const cardStyle = {
     background: "var(--accent)",
-    borderRadius: "16px",
+    borderRadius: "4px",
     padding: "40px",
-    boxShadow: "0 10px 40px rgba(0,0,0,0.04)",
     border: "1px solid var(--secondary)",
     marginBottom: "40px",
   };
 
-  if (isAuthLoading)
+  if (isAuthLoading) {
     return (
       <div style={{ paddingTop: "160px", textAlign: "center" }}>
         {t.loading}
       </div>
     );
+  }
 
   if (!user) {
     return (
@@ -226,7 +102,8 @@ export default function Admin() {
             style={{
               textAlign: "center",
               marginBottom: "30px",
-              color: "var(--primary)",
+              color: "var(--text)",
+              fontWeight: "400",
             }}
           >
             {t.adminLogin}
@@ -234,7 +111,7 @@ export default function Admin() {
           {loginError && (
             <div
               style={{
-                color: "#a95051",
+                color: "#C94A4A",
                 marginBottom: "15px",
                 textAlign: "center",
               }}
@@ -274,7 +151,7 @@ export default function Admin() {
   return (
     <div
       style={{
-        maxWidth: "900px",
+        maxWidth: "1000px",
         margin: "0 auto",
         padding: "160px 20px 80px",
         minHeight: "100vh",
@@ -282,400 +159,112 @@ export default function Admin() {
     >
       <div
         style={{
-          position: "fixed",
-          top: "120px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          background: feedback?.type === "error" ? "#a95051" : "var(--primary)",
-          color: "#fff",
-          padding: "12px 24px",
-          borderRadius: "8px",
-          zIndex: 1000,
-          opacity: feedback ? 1 : 0,
-          pointerEvents: feedback ? "auto" : "none",
-          transition: "opacity 0.3s ease, transform 0.3s ease",
-          transform: feedback ? "translate(-50%, 0)" : "translate(-50%, -20px)",
-        }}
-      >
-        {feedback?.message}
-      </div>
-
-      <div
-        style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: "flex-end",
           marginBottom: "40px",
           flexWrap: "wrap",
           gap: "10px",
         }}
       >
-        <h2 style={{ color: "var(--text)", margin: 0, fontSize: "2rem" }}>
-          {t.contentManager}
-        </h2>
-        <button
-          onClick={() => signOut(auth)}
+        <h1
           style={{
-            ...buttonStyle,
-            backgroundColor: "transparent",
-            color: "var(--primary)",
-            border: "2px solid var(--primary)",
+            color: "var(--text)",
+            margin: 0,
+            fontFamily: "'BrandFont', sans-serif",
+            fontSize: "3.2rem",
+            fontWeight: "normal",
+            lineHeight: "1",
           }}
         >
-          {t.logout}
+          {t.contentManager || "Admin Panel"}
+        </h1>
+
+        <button
+          onClick={() => signOut(auth)}
+          title={t.logout}
+          style={{
+            background: "none",
+            border: "none",
+            color: "var(--primary)",
+            cursor: "pointer",
+            padding: "8px",
+            display: "flex",
+            alignItems: "center",
+            opacity: 0.5,
+            transition: "opacity 0.2s ease",
+            marginBottom: "4px",
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.opacity = 1)}
+          onMouseOut={(e) => (e.currentTarget.style.opacity = 0.5)}
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="square"
+            strokeLinejoin="miter"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
         </button>
       </div>
 
-      {/* FORM CARD */}
+      <div style={{ display: "flex", gap: "4px" }}>
+        {["journalism"].map((tab) => {
+          const isActive = activeTab === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                padding: "16px 32px",
+                backgroundColor: isActive
+                  ? "var(--accent)"
+                  : "color-mix(in srgb, var(--secondary) 20%, transparent)",
+                borderTop: "1px solid var(--secondary)",
+                borderLeft: "1px solid var(--secondary)",
+                borderRight: "1px solid var(--secondary)",
+                borderBottom: isActive
+                  ? "1px solid var(--accent)"
+                  : "1px solid var(--secondary)",
+                borderRadius: "4px 4px 0 0",
+                color: isActive ? "var(--text)" : "var(--primary)",
+                cursor: "pointer",
+                fontSize: "1rem",
+                fontFamily: "inherit",
+                fontWeight: "500",
+                position: "relative",
+                top: "1px",
+                zIndex: isActive ? 2 : 1,
+                transition: "background-color 0.2s ease, color 0.2s ease",
+                textTransform: "capitalize",
+              }}
+            >
+              {t[tab] || tab}
+            </button>
+          );
+        })}
+      </div>
+
       <div
         style={{
-          ...cardStyle,
-          border: editId ? "2px solid var(--journalism)" : cardStyle.border,
+          backgroundColor: "var(--accent)",
+          border: "1px solid var(--secondary)",
+          borderRadius: "0 4px 4px 4px",
+          padding: "40px",
+          minHeight: "600px",
+          position: "relative",
+          zIndex: 1,
         }}
       >
-        {editId && (
-          <div
-            style={{
-              background: "var(--journalism)",
-              color: "#000",
-              padding: "10px 15px",
-              borderRadius: "8px",
-              marginBottom: "20px",
-              fontWeight: "bold",
-            }}
-          >
-            {t.editingNotice}
-          </div>
-        )}
-
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: "24px" }}
-        >
-          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-            <div style={{ flex: "2 1 300px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  color: "var(--primary)",
-                  fontWeight: "600",
-                }}
-              >
-                {t.titleLabel}
-              </label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                style={inputStyle}
-              />
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-            <div style={{ flex: "1 1 150px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  color: "var(--primary)",
-                  fontWeight: "600",
-                }}
-              >
-                Category
-              </label>
-              <select
-                value={formCategory}
-                onChange={(e) => setFormCategory(e.target.value)}
-                style={inputStyle}
-              >
-                <option value="artikel">{t.articles}</option>
-                <option value="audio">{t.audio}</option>
-                <option value="tv">{t.tv}</option>
-              </select>
-            </div>
-            <div style={{ flex: "1 1 150px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  color: "var(--primary)",
-                  fontWeight: "600",
-                }}
-              >
-                {t.languageLabel}
-              </label>
-              <select
-                value={entryLang}
-                onChange={(e) => setEntryLang(e.target.value)}
-                style={inputStyle}
-              >
-                <option value="DE">{t.german}</option>
-                <option value="EN">{t.english}</option>
-                <option value="FR">{t.french}</option>
-                <option value="ALL">{t.allLanguages}</option>
-              </select>
-            </div>
-            <div style={{ flex: "1 1 150px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  color: "var(--primary)",
-                  fontWeight: "600",
-                }}
-              >
-                {t.publishDate}
-              </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                style={inputStyle}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                color: "var(--primary)",
-                fontWeight: "600",
-              }}
-            >
-              {t.shortDesc}
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-              rows={3}
-              style={{ ...inputStyle, resize: "vertical" }}
-            />
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                color: "var(--primary)",
-                fontWeight: "600",
-              }}
-            >
-              {t.linkUrl}
-            </label>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <input
-                type="url"
-                value={link}
-                onChange={(e) => setLink(e.target.value)}
-                required
-                style={{ ...inputStyle, flex: 1 }}
-              />
-              {editId && link && (
-                <a
-                  href={link}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "0 16px",
-                    borderRadius: "8px",
-                    background: "var(--background)",
-                    border: "2px solid var(--primary)",
-                    color: "var(--primary)",
-                    textDecoration: "none",
-                    fontWeight: "600",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  ↗ Open
-                </a>
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: "15px", marginTop: "10px" }}>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              style={{
-                ...buttonStyle,
-                flex: 1,
-                opacity: isSubmitting ? 0.7 : 1,
-              }}
-            >
-              {isSubmitting
-                ? t.loading
-                : editId
-                  ? t.update
-                  : `${t.save} ${getTabName(formCategory)}`}
-            </button>
-            {editId && (
-              <button
-                type="button"
-                onClick={cancelEdit}
-                style={{
-                  ...buttonStyle,
-                  flex: 1,
-                  backgroundColor: "transparent",
-                  color: "var(--primary)",
-                  border: "2px solid var(--primary)",
-                }}
-              >
-                {t.cancel}
-              </button>
-            )}
-          </div>
-        </form>
+        {activeTab === "journalism" && <JournalismAdmin user={user} />}
       </div>
-
-      {/* LIST TABS - POSITIONED BELOW FORM & ABOVE LIST */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        {["artikel", "audio", "tv"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => {
-              setListCategory(tab);
-              cancelEdit();
-            }}
-            style={{
-              flex: 1,
-              padding: "12px",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: listCategory === tab ? "600" : "500",
-              backgroundColor:
-                listCategory === tab ? "var(--primary)" : "var(--background)",
-              color: listCategory === tab ? "var(--accent)" : "var(--primary)",
-              boxShadow:
-                listCategory === tab ? "0 4px 12px rgba(0,0,0,0.05)" : "none",
-              transition: "all 0.2s ease",
-            }}
-          >
-            {getTabName(tab)}
-          </button>
-        ))}
-      </div>
-
-      {isLoadingList ? (
-        <p style={{ color: "var(--primary)" }}>{t.loading}</p>
-      ) : items.length === 0 ? (
-        <p
-          style={{
-            color: "var(--primary)",
-            fontStyle: "italic",
-            background: "var(--accent)",
-            padding: "20px",
-            borderRadius: "8px",
-          }}
-        >
-          {t.noItems}
-        </p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-          {items.map((item) => {
-            const isUnedited =
-              item.title &&
-              item.title.length > 1 &&
-              item.title.slice(1) === item.title.slice(1).toLowerCase();
-
-            return (
-              <div
-                key={item.id}
-                style={{
-                  background: "var(--accent)",
-                  padding: "24px",
-                  borderRadius: "12px",
-                  border: isUnedited
-                    ? "2px dashed var(--primary)"
-                    : "1px solid var(--secondary)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "20px",
-                }}
-              >
-                <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "10px",
-                      alignItems: "center",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "0.85rem",
-                        color: "var(--background)",
-                        background: "var(--primary)",
-                        padding: "2px 8px",
-                        borderRadius: "12px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {item.language || "DE"}
-                    </span>
-                    <span
-                      style={{ fontSize: "0.9rem", color: "var(--primary)" }}
-                    >
-                      {new Date(item.date).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <h4
-                    style={{
-                      margin: "0 0 5px 0",
-                      fontSize: "1.15rem",
-                      color: "var(--text)",
-                    }}
-                  >
-                    {item.title}
-                  </h4>
-                </div>
-                <div style={{ display: "flex", gap: "10px", flexShrink: 0 }}>
-                  <button
-                    onClick={() => handleEditClick(item)}
-                    style={{
-                      padding: "8px 16px",
-                      border: "2px solid var(--primary)",
-                      background: "transparent",
-                      color: "var(--primary)",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontWeight: "600",
-                    }}
-                  >
-                    {t.edit}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    style={{
-                      padding: "8px 16px",
-                      border: "none",
-                      background: "#a95051",
-                      color: "white",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontWeight: "600",
-                    }}
-                  >
-                    {t.delete}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

@@ -5,13 +5,13 @@
   --text: #141c09;
   --background: #fff7fc;
   --primary: #3a3a3a;
-  --secondary: #baa6da;
+  --secondary: #c8c8c8;
   --accent: #fff1fa;
   
   /* Category Colors */
   --art: #f3a1e5;
   --education: #b1d182;
-  --journalism: #d2b61c;
+  --journalism: #ebcc19;
 
   /* Mapped for backwards compatibility */
   --artist: var(--art);

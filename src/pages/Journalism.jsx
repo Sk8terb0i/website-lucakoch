@@ -72,15 +72,30 @@ export default function Journalism() {
     return `${day}.${month}.${year} — ${langTag || "DE"}`;
   };
 
+  // Maps dedicated translation keys to specific sections
   const sections = [
-    { key: "artikel", title: t.articles, path: "/journalism/artikel" },
-    { key: "audio", title: t.audio, path: "/journalism/audio" },
-    { key: "tv", title: t.tv, path: "/journalism/tv" },
+    {
+      key: "artikel",
+      title: t.articles,
+      path: "/journalism/artikel",
+      discoverText: t.discoverArticles,
+    },
+    {
+      key: "audio",
+      title: t.audio,
+      path: "/journalism/audio",
+      discoverText: t.discoverAudio,
+    },
+    {
+      key: "tv",
+      title: t.tv,
+      path: "/journalism/tv",
+      discoverText: t.discoverTv,
+    },
   ];
 
   return (
     <>
-      {/* Top Mask for Fixed Header */}
       <div
         style={{
           position: "fixed",
@@ -94,7 +109,6 @@ export default function Journalism() {
         }}
       />
 
-      {/* Bottom Mask for Fixed Footer */}
       <div
         style={{
           position: "fixed",
@@ -118,7 +132,6 @@ export default function Journalism() {
           boxSizing: "border-box",
         }}
       >
-        {/* Main Title */}
         <h1
           style={{
             fontFamily: "'BrandFont', sans-serif",
@@ -131,7 +144,6 @@ export default function Journalism() {
           {t.journalism || t.journalist}
         </h1>
 
-        {/* Category Sections */}
         <div
           style={{
             display: "flex",
@@ -139,7 +151,7 @@ export default function Journalism() {
             gap: isMobile ? "32px" : "60px",
           }}
         >
-          {sections.map(({ key, title, path }) => {
+          {sections.map(({ key, title, path, discoverText }) => {
             const item = latestItems[key];
 
             return (
@@ -157,7 +169,6 @@ export default function Journalism() {
                     gap: isMobile ? "12px" : "20px",
                   }}
                 >
-                  {/* Category Title Column */}
                   <div>
                     <h2
                       style={{
@@ -172,7 +183,6 @@ export default function Journalism() {
                     </h2>
                   </div>
 
-                  {/* Category Content Column */}
                   <div
                     style={{
                       display: "flex",
@@ -180,7 +190,6 @@ export default function Journalism() {
                       gap: isMobile ? "8px" : "20px",
                     }}
                   >
-                    {/* Render recent item ONLY on desktop */}
                     {!isMobile &&
                       (loading ? (
                         <p style={{ color: "var(--primary)", margin: 0 }}>
@@ -194,7 +203,6 @@ export default function Journalism() {
                             gap: "8px",
                           }}
                         >
-                          {/* Meta Row */}
                           <div
                             style={{
                               fontSize: "0.75rem",
@@ -205,7 +213,6 @@ export default function Journalism() {
                             {formatDateMeta(item.date, item.language)}
                           </div>
 
-                          {/* Title with Yellow Hover Underline */}
                           <h3 style={{ margin: 0, lineHeight: "1.3" }}>
                             <a
                               href={item.link}
@@ -234,7 +241,6 @@ export default function Journalism() {
                             </a>
                           </h3>
 
-                          {/* Description */}
                           {item.description && (
                             <p
                               style={{
@@ -260,7 +266,6 @@ export default function Journalism() {
                         </p>
                       ))}
 
-                    {/* Discover More Subpage Link (Rendered on both mobile and desktop) */}
                     <div style={{ marginTop: isMobile ? "0" : "8px" }}>
                       <Link
                         to={path}
@@ -285,7 +290,7 @@ export default function Journalism() {
                             "var(--secondary)")
                         }
                       >
-                        Discover all {title.toLowerCase()} →
+                        {discoverText} →
                       </Link>
                     </div>
                   </div>

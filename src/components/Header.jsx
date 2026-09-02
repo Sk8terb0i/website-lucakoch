@@ -28,6 +28,18 @@ export default function Header() {
     };
   }, []);
 
+  // Lock background scrolling when menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMenuOpen]);
+
   const menuItems = [
     "art",
     "education",
@@ -110,12 +122,16 @@ export default function Header() {
             flexShrink: 0,
           }}
         >
+          {/* LANGUAGE SWITCHER CONTAINER */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               position: "relative",
               gap: "12px",
+              opacity: isMenuOpen ? 0 : 1,
+              pointerEvents: isMenuOpen ? "none" : "auto",
+              transition: "opacity 0.3s ease",
             }}
           >
             <div
@@ -227,6 +243,7 @@ export default function Header() {
           WebkitBackdropFilter: "blur(16px)",
           borderRight: "1px solid rgba(223, 217, 232, 0.5)",
           zIndex: 54,
+          // Block ALL interactions underneath it when the menu is active
           pointerEvents: isMenuOpen ? "auto" : "none",
           visibility: isMenuOpen ? "visible" : "hidden",
           opacity: isMobile ? (isMenuOpen ? 1 : 0) : 1,
@@ -261,6 +278,9 @@ export default function Header() {
           flexDirection: "column",
           padding: isMobile ? "8rem 2rem 3rem 2rem" : "8rem 4rem 3rem 4rem",
           overflowY: "auto",
+          // Strictly force pointerEvents to 'auto' to ensure the menu captures clicks,
+          // while the background is protected by the dimmer logic.
+          pointerEvents: isMenuOpen ? "auto" : "none",
           transform: isMenuOpen ? "translateX(0)" : "translateX(100%)",
           transition: "transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)",
         }}
@@ -293,11 +313,15 @@ export default function Header() {
                   transitionDelay: `${isMenuOpen ? index * 0.04 : 0}s`,
                 }}
                 onMouseOver={(e) => {
+                  // Override delay to 0s and speed up the animation to 0.15s
+                  e.currentTarget.style.transition = "all 0.15s ease 0s";
                   e.currentTarget.style.transform =
                     "translateX(15px) scale(1.02)";
                   e.currentTarget.style.opacity = isCoreTopic ? 0.7 : 0.6;
                 }}
                 onMouseOut={(e) => {
+                  // Fast snap back to original position
+                  e.currentTarget.style.transition = "all 0.2s ease 0s";
                   e.currentTarget.style.transform = "translateX(0) scale(1)";
                   e.currentTarget.style.opacity = 1;
                 }}

@@ -20,13 +20,11 @@ export default function JournalismList({
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Filter States
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [activeLangs, setActiveLangs] = useState(["DE", "EN", "FR"]);
 
-  // Accordion State
   const [openYears, setOpenYears] = useState({});
 
   useEffect(() => {
@@ -51,7 +49,6 @@ export default function JournalismList({
 
         setLinks(fetched);
 
-        // Auto-expand current year by default
         const currentYearStr = new Date().getFullYear().toString();
         setOpenYears({ [currentYearStr]: true });
       } catch (error) {
@@ -148,7 +145,6 @@ export default function JournalismList({
 
   return (
     <>
-      {/* FIXED TOP MASK */}
       <div
         style={{
           position: "fixed",
@@ -162,7 +158,6 @@ export default function JournalismList({
         }}
       />
 
-      {/* FIXED BOTTOM MASK */}
       <div
         style={{
           position: "fixed",
@@ -186,7 +181,6 @@ export default function JournalismList({
           boxSizing: "border-box",
         }}
       >
-        {/* EDITORIAL BACK LINK */}
         <div style={{ marginBottom: "16px" }}>
           <Link
             to="/journalism"
@@ -214,7 +208,6 @@ export default function JournalismList({
           </Link>
         </div>
 
-        {/* PAGE TITLE */}
         <h1
           style={{
             fontFamily: "'BrandFont', sans-serif",
@@ -227,7 +220,6 @@ export default function JournalismList({
           {title}
         </h1>
 
-        {/* MINIMALIST EDITORIAL FILTER BAR */}
         <div
           style={{
             borderBottom: "1px solid var(--secondary)",
@@ -238,7 +230,6 @@ export default function JournalismList({
             gap: "16px",
           }}
         >
-          {/* Search Input */}
           <input
             type="text"
             placeholder={`${t.titleLabel}...`}
@@ -262,7 +253,6 @@ export default function JournalismList({
             onBlur={(e) => (e.target.style.borderColor = "var(--secondary)")}
           />
 
-          {/* Filter Controls Row */}
           <div
             style={{
               display: "flex",
@@ -273,9 +263,8 @@ export default function JournalismList({
               color: "var(--primary)",
             }}
           >
-            {/* Language Shorthand Toggles */}
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>Language:</span>
+              <span>{t.filterLangLabel}</span>
               <div style={{ display: "flex", gap: "6px" }}>
                 {["DE", "EN", "FR"].map((code) => {
                   const isActive = activeLangs.includes(code);
@@ -307,9 +296,8 @@ export default function JournalismList({
               </div>
             </div>
 
-            {/* Date From */}
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span>From:</span>
+              <span>{t.filterFrom}</span>
               <input
                 type="date"
                 value={startDate}
@@ -325,9 +313,8 @@ export default function JournalismList({
               />
             </div>
 
-            {/* Date To */}
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span>To:</span>
+              <span>{t.filterTo}</span>
               <input
                 type="date"
                 value={endDate}
@@ -343,7 +330,6 @@ export default function JournalismList({
               />
             </div>
 
-            {/* Reset Action */}
             {isFiltering && (
               <button
                 onClick={clearFilters}
@@ -359,7 +345,7 @@ export default function JournalismList({
                   fontFamily: "inherit",
                 }}
               >
-                Clear filters
+                {t.clearFilters}
               </button>
             )}
           </div>
@@ -373,7 +359,6 @@ export default function JournalismList({
           </p>
         )}
 
-        {/* SWISS YEAR ACCORDION */}
         <div style={{ display: "flex", flexDirection: "column" }}>
           {sortedYears.map((year) => {
             const yearItems = groupedByYear[year];
@@ -388,7 +373,6 @@ export default function JournalismList({
                   paddingBottom: "10px",
                 }}
               >
-                {/* TWO-COLUMN GRID */}
                 <div
                   style={{
                     display: "grid",
@@ -396,7 +380,6 @@ export default function JournalismList({
                     gap: isMobile ? "12px" : "20px",
                   }}
                 >
-                  {/* LEFT COLUMN: YEAR HEADER */}
                   <div
                     onClick={() => toggleYear(year)}
                     style={{
@@ -419,7 +402,6 @@ export default function JournalismList({
                       {year}
                     </span>
 
-                    {/* CHEVRON */}
                     <div
                       style={{
                         marginTop: isMobile ? "3px" : "6px",
@@ -444,7 +426,6 @@ export default function JournalismList({
                     </div>
                   </div>
 
-                  {/* RIGHT COLUMN: ENTRIES */}
                   <div
                     style={{
                       display: "grid",
@@ -473,7 +454,6 @@ export default function JournalismList({
                               paddingBottom: isMobile ? "18px" : "24px",
                             }}
                           >
-                            {/* META ROW */}
                             <div
                               style={{
                                 fontSize: "0.75rem",
@@ -485,7 +465,6 @@ export default function JournalismList({
                               {formatDateMeta(item.date, item.language)}
                             </div>
 
-                            {/* LINK TITLE WITH YELLOW HOVER UNDERLINE */}
                             <div>
                               <h2 style={{ margin: 0, lineHeight: "1.3" }}>
                                 <a

@@ -297,6 +297,9 @@ export default function Portfolio() {
     if (isMobile || activeCluster === "all") return;
 
     const handleMouseMove = (e) => {
+      // GUARD: Stop calculating hover distances if the mobile menu is open
+      if (document.body.style.overflow === "hidden") return;
+
       const cx = window.innerWidth / 2;
       const cy = window.innerHeight / 2;
       const vmin = Math.min(window.innerWidth, window.innerHeight);
